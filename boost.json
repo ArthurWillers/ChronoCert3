@@ -7,7 +7,8 @@
     "guidelines": true,
     "packages": [
         "spatie/laravel-permission",
-        "spatie/laravel-activitylog"
+        "spatie/laravel-activitylog",
+        "spatie/laravel-medialibrary"
     ],
     "skills": [
         "infer-conventions",
@@ -15,6 +16,7 @@
         "laravel-best-practices",
         "pest-testing",
         "tailwindcss-development",
+        "medialibrary-development",
         "laravel-permission-development"
     ]
 }
