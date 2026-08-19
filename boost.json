@@ -5,11 +5,15 @@
     ],
     "cloud": false,
     "guidelines": true,
+    "packages": [
+        "spatie/laravel-permission"
+    ],
     "skills": [
         "infer-conventions",
         "fortify-development",
         "laravel-best-practices",
         "pest-testing",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "laravel-permission-development"
     ]
 }
