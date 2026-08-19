@@ -6,7 +6,8 @@
     "cloud": false,
     "guidelines": true,
     "packages": [
-        "spatie/laravel-permission"
+        "spatie/laravel-permission",
+        "spatie/laravel-activitylog"
     ],
     "skills": [
         "infer-conventions",
