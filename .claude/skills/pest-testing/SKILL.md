@@ -78,7 +78,7 @@ Use datasets for repetitive tests (validation rules, etc.):
 it('has emails', function (string $email) {
     expect($email)->not->toBeEmpty();
 })->with([
-    'james' => 'james@laravel.com',
+    'usuario' => 'usuario@exemplo.com',
     'taylor' => 'taylor@laravel.com',
 ]);
 ```

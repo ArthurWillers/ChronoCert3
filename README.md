@@ -10,7 +10,6 @@ O ChronoCert é um sistema web, ainda em desenvolvimento, para centralizar o env
 - Spatie Laravel Medialibrary 11.23 — gerenciamento de arquivos
 - Spatie Laravel Permission 8.3 — permissões e papéis
 - Tailwind CSS 4.3.3 — estilização
-- Preline 4.2.0 — componentes de interface
 
 ### Ferramentas de desenvolvimento
 

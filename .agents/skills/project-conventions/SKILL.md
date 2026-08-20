@@ -52,13 +52,11 @@ Use esta skill para manter decisões de arquitetura, bibliotecas e interface con
 - Use Blade e Blade Components para a interface server-rendered.
 - Use Tailwind CSS v4 com a configuração CSS-first existente em `resources/css/app.css`; não crie `tailwind.config.js` para resolver uma necessidade pontual.
 - Use o `resources/views/partials/head.blade.php` e os entrypoints Vite existentes. Não crie um segundo caminho para carregar CSS ou JavaScript.
-- Procure primeiro uma solução equivalente no Preline. Quando existir, use sua estrutura, classes, atributos `data-hs-*` e API JavaScript documentados.
-- Encapsule padrões repetidos do Preline em componentes Blade próprios, expondo props e slots adequados ao projeto. Preline não substitui os componentes Blade.
-- Use Alpine ou JavaScript próprio somente quando o Preline não cobrir o comportamento ou quando a interação for específica do domínio.
-- Componentes copiados de outros projetos, como o James, servem como referência visual e estrutural. Adapte-os às convenções do ChronoCert e não copie automaticamente suas interações Alpine.
+- Use Alpine.js como padrão para estados e interações simples da interface. Use JavaScript próprio apenas quando a interação não se encaixar no Alpine ou exigir uma biblioteca específica.
+- Os componentes Blade existentes do projeto são a base da interface. Preserve sua API e interações Alpine úteis ao adaptá-los para novos contextos.
 - Reutilize um componente Blade existente antes de criar marcação duplicada. Extraia padrões visuais específicos do projeto quando houver repetição real.
-- Para ícones em componentes e views, prefira os componentes do Blade UI Kit/Blade Heroicons em vez de copiar SVGs diretamente do James ou do Preline.
-- Para detalhes dos componentes e plugins Preline, leia [references/preline.md](references/preline.md) quando a tarefa envolver interface ou comportamento interativo.
+- Não introduza Preline ou outra biblioteca de componentes de interface sem uma decisão explícita.
+- Para ícones em componentes e views, prefira os componentes do Blade UI Kit/Blade Heroicons em vez de copiar SVGs diretamente.
 
 ## Dependências e integrações
 
