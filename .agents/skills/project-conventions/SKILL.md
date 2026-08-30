@@ -54,6 +54,8 @@ Use esta skill para manter decisões de arquitetura, bibliotecas e interface con
 - Use o `resources/views/partials/head.blade.php` e os entrypoints Vite existentes. Não crie um segundo caminho para carregar CSS ou JavaScript.
 - Use Alpine.js como padrão para estados e interações simples da interface. Use JavaScript próprio apenas quando a interação não se encaixar no Alpine ou exigir uma biblioteca específica.
 - Os componentes Blade existentes do projeto são a base da interface. Preserve sua API e interações Alpine úteis ao adaptá-los para novos contextos.
+- Os diretórios `ui`, `form`, `layout` e `nav` são registrados como caminhos de componentes anônimos sem prefixo. Use `<x-button>`, `<x-form-input>`, `<x-sidebar>` e `<x-nav-link>`; não use `<x-ui.button>`, `<x-form.form-input>`, `<x-layout.sidebar>` nem `<x-nav.nav-link>`.
+- Organize cada componente principal em sua própria pasta com `index.blade.php`, como `ui/button/index.blade.php` ou `form/form-input/index.blade.php`. Partes internas ficam na mesma pasta, como `ui/modal/trigger.blade.php` e `ui/breadcrumbs/item.blade.php`.
 - Reutilize um componente Blade existente antes de criar marcação duplicada. Extraia padrões visuais específicos do projeto quando houver repetição real.
 - Não introduza Preline ou outra biblioteca de componentes de interface sem uma decisão explícita.
 - Para ícones em componentes e views, prefira os componentes do Blade UI Kit/Blade Heroicons em vez de copiar SVGs diretamente.
