@@ -33,7 +33,7 @@ return [
      * The disk on which to store added files and derived images by default. Choose
      * one or more of the disks you've configured in config/filesystems.php.
      */
-    'disk_name' => env('MEDIA_DISK', 'public'),
+    'disk_name' => env('MEDIA_DISK', 'private'),
 
     /*
      * The disk on which to store conversions (thumbnails, etc.) and responsive images
@@ -72,7 +72,7 @@ return [
      * in `shell.php.jpg`) is rejected even if the final extension is allowed.
      * Leave `null` to disable allowlisting.
      */
-    'allowed_extensions' => null,
+    'allowed_extensions' => ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
 
     /*
      * This queue connection will be used to generate derived and responsive images.
