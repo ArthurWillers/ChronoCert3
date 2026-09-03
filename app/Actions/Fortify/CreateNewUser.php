@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Rules\ValidCpf;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -24,6 +25,7 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
+            'cpf' => ['required', 'string', new ValidCpf, Rule::unique(User::class)],
             'email' => [
                 'required',
                 'string',
@@ -36,6 +38,7 @@ class CreateNewUser implements CreatesNewUsers
 
         return User::create([
             'name' => $input['name'],
+            'cpf' => $input['cpf'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);

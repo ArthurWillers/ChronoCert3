@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum AffiliationType: string
 {
-    case STUDENT = 'student';
-    case COORDINATOR = 'coordinator';
-    case ADMINISTRATOR = 'administrator';
+    case Student = 'student';
+    case Coordinator = 'coordinator';
+    case Administrator = 'administrator';
 
     /**
      * Obter o rótulo do tipo de vínculo em português.
@@ -14,9 +14,9 @@ enum AffiliationType: string
     public function label(): string
     {
         return match ($this) {
-            self::STUDENT => 'Aluno',
-            self::COORDINATOR => 'Coordenador',
-            self::ADMINISTRATOR => 'Administrador',
+            self::Student => 'Discente',
+            self::Coordinator => 'Coordenação',
+            self::Administrator => 'Administrador',
         };
     }
 
