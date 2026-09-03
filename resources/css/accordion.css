@@ -1,0 +1,68 @@
+/* Transitions.dev — Accordion expand */
+
+:root {
+    --acc-expand: var(--duration-fast);
+    --acc-collapse: var(--duration-fast);
+    --acc-chevron: var(--duration-fast);
+    --acc-ease: var(--ease-smooth-out);
+}
+
+.t-acc-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    min-height: 0;
+    overflow: hidden;
+    transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+}
+
+.t-acc[data-open="true"] .t-acc-panel {
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+}
+
+.t-acc-panel-inner {
+    min-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    filter: blur(var(--blur-small));
+    transition:
+        opacity var(--acc-collapse) var(--acc-ease),
+        filter var(--acc-collapse) var(--acc-ease);
+}
+
+.t-acc[data-open="true"] .t-acc-panel-inner {
+    opacity: 1;
+    filter: blur(0);
+    transition:
+        opacity var(--acc-expand) var(--acc-ease),
+        filter var(--acc-expand) var(--acc-ease);
+}
+
+.t-acc-chevron {
+    display: inline-flex;
+    transform: rotate(0deg);
+    transform-origin: center;
+    transition: transform var(--acc-chevron) var(--acc-ease);
+}
+
+.t-acc-chevron path {
+    vector-effect: non-scaling-stroke;
+}
+
+.t-acc[data-open="true"] .t-acc-chevron {
+    transform: rotate(180deg);
+}
+
+@media (min-width: 640px) {
+    .t-acc-panel--desktop-open {
+        display: contents;
+    }
+
+    .t-acc-panel--desktop-open .t-acc-panel-inner {
+        overflow: visible;
+        opacity: 1;
+        filter: none;
+    }
+
+}
+

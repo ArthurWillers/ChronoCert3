@@ -1,0 +1,23 @@
+/* Transitions.dev learn-more hover adapted to James's navigation actions. */
+:root {
+    --learn-shift: 2px;
+    --learn-in: var(--duration-fast);
+    --learn-out: var(--duration-medium);
+    --learn-in-ease: var(--ease-smooth-out);
+    --learn-out-ease: var(--ease-bounce-strong);
+}
+
+.t-learn-chevron {
+    display: inline-flex;
+    transform: translateX(0);
+    transition:
+        transform var(--learn-out) var(--learn-out-ease);
+}
+
+.t-learn:hover .t-learn-chevron,
+.t-learn:focus-visible .t-learn-chevron {
+    transform: translateX(var(--learn-shift));
+    transition-duration: var(--learn-in);
+    transition-timing-function: var(--learn-in-ease);
+}
+

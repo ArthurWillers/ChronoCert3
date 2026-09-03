@@ -1,0 +1,60 @@
+/* Transitions.dev checkbox check adapted to the James accent colour. */
+:root {
+    --check-box: var(--duration-quick);
+    --check-draw: var(--duration-medium);
+    --check-delay: 0ms;
+    --check-uncheck: var(--duration-quick);
+    --check-ease: var(--ease-smooth-out);
+}
+
+.t-check {
+    --check-len: 25;
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-neutral-300);
+    border-radius: 4px;
+    background: var(--color-white);
+    color: var(--color-white);
+    box-shadow: 0 0 0 0 transparent;
+    transition:
+        background var(--check-box) var(--check-ease),
+        border-color var(--check-box) var(--check-ease),
+        box-shadow var(--check-box) var(--check-ease);
+}
+
+.t-check svg {
+    width: 14px;
+    height: 14px;
+}
+
+.t-check svg path {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    stroke-dasharray: var(--check-len, 15);
+    stroke-dashoffset: var(--check-len, 15);
+    transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+}
+
+.peer:checked + .t-check {
+    border-color: var(--color-neutral-900);
+    background: var(--color-neutral-900);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-neutral-900) 18%, transparent);
+}
+
+.peer:checked + .t-check svg path {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset var(--check-draw) var(--check-ease) var(--check-delay);
+}
+
+.peer:focus-visible + .t-check {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+

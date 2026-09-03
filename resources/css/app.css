@@ -1,9 +1,46 @@
 @import 'tailwindcss';
+@import './toggle.css';
+@import './checkbox.css';
+@import './tooltip.css';
+@import './dropdown.css';
+@import './accordion.css';
+@import './learn.css';
+@import './text-swap.css';
+@import './radio-block.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+
+/* transitions-polish — shared motion-token scale. */
+:root {
+    --duration-stagger: 40ms;
+    --duration-micro: 80ms;
+    --duration-quick: 150ms;
+    --duration-fast: 250ms;
+    --duration-medium: 350ms;
+    --duration-slow: 400ms;
+    --duration-very-slow: 500ms;
+    --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: ease-in-out;
+    --ease-out: ease-out;
+    --ease-linear: linear;
+    --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1);
+    --distance-micro: 4px;
+    --distance-small: 6px;
+    --distance-base: 8px;
+    --distance-medium: 12px;
+    --distance-large: 30px;
+    --scale-large: 0.96;
+    --scale-medium: 0.97;
+    --scale-small: 0.98;
+    --scale-tiny: 0.99;
+    --blur-small: 2px;
+    --blur-medium: 3px;
+    --blur-large: 8px;
+}
 
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
@@ -11,10 +48,10 @@
 
     --color-accent: #5f21af;
 
-    --text-xxs: 0.625rem;
-    --text-xxs--line-height: 0.875rem;
+    --text-xxs: 0.625rem; /* 10px */
+    --text-xxs--line-height: 0.875rem; /* 14px */
 
-    --animate-shake: shake 0.5s ease-in-out;
+    --animate-shake: shake var(--duration-very-slow) var(--ease-in-out);
 
     @keyframes shake {
 
@@ -40,6 +77,92 @@
     }
 }
 
+@utility motion-duration-quick {
+    transition-duration: var(--duration-quick);
+}
+
+@utility motion-duration-fast {
+    transition-duration: var(--duration-fast);
+}
+
+@utility motion-duration-medium {
+    transition-duration: var(--duration-medium);
+}
+
+@utility motion-duration-slow {
+    transition-duration: var(--duration-slow);
+}
+
+@utility motion-ease-smooth-out {
+    transition-timing-function: var(--ease-smooth-out);
+}
+
+@utility motion-scale-large {
+    scale: var(--scale-large);
+}
+
+@utility interaction-delete {
+    &:hover svg:not(.animate-spin) {
+        animation: interaction-delete-icon 400ms ease-in-out;
+        transform-origin: center;
+        will-change: transform;
+    }
+}
+
+@utility button-scale {
+    transform: scale(1);
+    transform-origin: center;
+    transition: transform 360ms cubic-bezier(0.34, 1.8, 0.64, 1.2);
+
+    &:hover {
+        transform: scale(1.04, 1.02);
+        transition-timing-function: var(--ease-bounce);
+    }
+
+    &:active {
+        transform: scale(0.97, 0.95);
+        transition-duration: var(--duration-quick);
+        transition-timing-function: ease-out;
+    }
+}
+
+@keyframes interaction-delete-icon {
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-2px) rotate(-10deg);
+    }
+
+    50% {
+        transform: translateY(0) rotate(10deg);
+    }
+
+    75% {
+        transform: translateY(-2px) rotate(-10deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .interaction-delete:hover svg:not(.animate-spin) {
+        animation: none;
+    }
+
+    .button-scale {
+        transition: none;
+    }
+
+    .button-scale,
+    .button-scale:hover,
+    .button-scale:active {
+        transition: none;
+        transform: none;
+    }
+
+}
+
 [x-cloak] {
     display: none !important;
 }
@@ -49,43 +172,187 @@
         scrollbar-gutter: stable;
     }
 
-    :where(*:focus-visible):not(input, select, textarea) {
-        @apply relative z-10 outline-hidden ring-2 ring-accent ring-offset-2;
+    html.t-modal-open {
+        background-color: rgb(23 23 23 / 50%);
     }
 
-    :where(a, button, input, select, textarea, [tabindex='0']):focus-visible:not([class*='rounded']) {
+    /* Focus global usando o sistema nativo do Tailwind para evitar conflitos com shadows.
+       Excluímos inputs, selects e textareas para que mantenham seu design suave original. */
+    :where(*:focus-visible):not(input, select, textarea) {
+        @apply outline-hidden ring-2 ring-accent ring-offset-2 z-10 relative;
+    }
+
+    /* Um pequeno arredondamento padrão para elementos quadrados (pode ser sobrescrito por utilitários rounded-*) */
+    :where(a, button, input, select, textarea, [tabindex="0"]):focus-visible:not([class*="rounded"]) {
         border-radius: 6px;
     }
 
     select {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9'/%3e%3c/svg%3e");
+        /* Remove a seta padrão e adiciona a nossa */
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9' /%3e%3c/svg%3e");
         background-position: right 0.5rem center;
         background-repeat: no-repeat;
         background-size: 1.5em 1.5em;
         padding-right: 2.5rem;
-        print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        appearance: none;
     }
 
+    /* Previne zoom automático no Safari iOS ao focar em inputs */
     @supports (-webkit-touch-callout: none) {
 
-        input[type='text'],
-        input[type='number'],
-        input[type='email'],
-        input[type='password'],
-        input[type='search'],
-        input[type='tel'],
-        input[type='url'],
-        input[type='date'],
-        input[type='datetime-local'],
-        input[type='month'],
-        input[type='week'],
-        input[type='time'],
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        input[type="search"],
+        input[type="tel"],
+        input[type="url"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="month"],
+        input[type="week"],
+        input[type="time"],
         input:not([type]),
         textarea,
         select {
             font-size: 16px !important;
+        }
+    }
+}
+
+@layer components {
+    .t-modal-scroll {
+        scrollbar-color: var(--color-neutral-500) var(--color-neutral-900);
+        scrollbar-width: thin;
+    }
+
+    .t-modal-scroll::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .t-modal-scroll::-webkit-scrollbar-track {
+        background: var(--color-neutral-900);
+    }
+
+    .t-modal-scroll::-webkit-scrollbar-thumb {
+        border: 3px solid var(--color-neutral-900);
+        border-radius: 999px;
+        background: var(--color-neutral-500);
+    }
+
+    .t-modal-scroll::-webkit-scrollbar-thumb:hover {
+        background: var(--color-neutral-400);
+    }
+
+    .t-toast {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .t-toast::after {
+        position: absolute;
+        inset: 0 0 0 auto;
+        width: 3rem;
+        content: '';
+        pointer-events: none;
+        opacity: 0;
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 88%));
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000);
+        mask-image: linear-gradient(90deg, transparent, #000);
+        transition: opacity var(--duration-quick) var(--ease-smooth-out);
+    }
+
+    .t-toast.is-leaving::after {
+        opacity: 1;
+    }
+
+    .markdown-content {
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #171717;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+        }
+
+        p {
+            margin-bottom: 1em;
+            line-height: 1.6;
+        }
+
+        strong,
+        b {
+            font-weight: 600;
+            color: #171717;
+        }
+
+        em,
+        i {
+            font-style: italic;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        li>ul,
+        li>ol {
+            margin-bottom: 0;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+
+        blockquote {
+            border-left: 4px solid #e5e5e5;
+            padding-left: 1em;
+            color: #737373;
+            font-style: italic;
+            margin-bottom: 1em;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #e5e5e5;
+            margin: 2em 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.375rem;
+            margin-bottom: 1em;
         }
     }
 }
