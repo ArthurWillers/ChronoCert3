@@ -2,7 +2,11 @@
 
 namespace App\Actions\Fortify;
 
+use App\Actions\Affiliations\ActiveAffiliationContext;
+use App\Actions\Audit\RecordActivity;
+use App\Enums\AuditEvent;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -10,6 +14,11 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
+    public function __construct(
+        private RecordActivity $recordActivity,
+        private ActiveAffiliationContext $activeAffiliationContext,
+    ) {}
+
     /**
      * Validate and update the given user's profile information.
      *
@@ -29,8 +38,27 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             ],
         ])->validateWithBag('updateProfileInformation');
 
-        $user->forceFill([
-            'email' => $input['email'],
-        ])->save();
+        if ($user->email === $input['email']) {
+            return;
+        }
+
+        $previousEmail = $user->email;
+        $activeAffiliation = $this->activeAffiliationContext->for($user);
+
+        DB::transaction(function () use ($activeAffiliation, $input, $previousEmail, $user): void {
+            $user->forceFill([
+                'email' => $input['email'],
+            ])->save();
+
+            $this->recordActivity->execute(
+                event: AuditEvent::UserLoginEmailChanged,
+                subject: $user,
+                causer: $user,
+                activeAffiliation: $activeAffiliation,
+                contextCourseId: $activeAffiliation?->getAttribute('course_id'),
+                references: ['user' => $user],
+                changes: ['email' => ['old' => $previousEmail, 'new' => $input['email']]],
+            );
+        });
     }
 }

@@ -17,6 +17,11 @@
             <x-nav-link :href="route('dashboard')" :current="request()->routeIs('dashboard')">
                 <x-heroicon-o-home /> Início
             </x-nav-link>
+            @can('viewAny', \App\Models\AuditActivity::class)
+                <x-nav-link :href="route('audit.index')" :current="request()->routeIs('audit.*')">
+                    <x-heroicon-o-clipboard-document-list /> Auditoria
+                </x-nav-link>
+            @endcan
         </nav>
 
         <x-dropdown position="top" class="mt-auto hidden lg:block" accent content-class="w-full">

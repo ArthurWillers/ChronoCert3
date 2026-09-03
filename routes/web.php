@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AffiliationSelectionController;
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,5 +17,14 @@ Route::middleware('auth')->group(function (): void {
         ->middleware('active-affiliation')
         ->name('dashboard');
 
-    Route::view('/settings', 'settings')->name('settings');
+    Route::get('/audit', [AuditController::class, 'index'])
+        ->middleware('active-affiliation')
+        ->name('audit.index');
+    Route::get('/audit/{auditActivity}', [AuditController::class, 'show'])
+        ->middleware('active-affiliation')
+        ->name('audit.show');
+
+    Route::view('/settings', 'settings')
+        ->middleware('active-affiliation')
+        ->name('settings');
 });

@@ -2,8 +2,11 @@
 
 namespace App\Actions\Fortify;
 
+use App\Actions\Audit\RecordActivity;
+use App\Enums\AuditEvent;
 use App\Models\User;
 use App\Rules\ValidCpf;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -13,6 +16,8 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
+
+    public function __construct(private RecordActivity $recordActivity) {}
 
     /**
      * Validate and create a newly registered user.
@@ -36,11 +41,26 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
-            'name' => $input['name'],
-            'cpf' => $input['cpf'],
-            'email' => $input['email'],
-            'password' => Hash::make($input['password']),
-        ]);
+        return DB::transaction(function () use ($input): User {
+            $user = User::create([
+                'name' => $input['name'],
+                'cpf' => $input['cpf'],
+                'email' => $input['email'],
+                'password' => Hash::make($input['password']),
+            ]);
+
+            $this->recordActivity->execute(
+                event: AuditEvent::UserCreated,
+                subject: $user,
+                references: ['user' => $user],
+                changes: [
+                    'name' => ['old' => null, 'new' => $user->name],
+                    'cpf' => ['old' => null, 'new' => $user->cpf],
+                    'email' => ['old' => null, 'new' => $user->email],
+                ],
+            );
+
+            return $user;
+        });
     }
 }

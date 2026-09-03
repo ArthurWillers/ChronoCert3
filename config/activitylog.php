@@ -1,8 +1,8 @@
 <?php
 
-use Spatie\Activitylog\Actions\CleanActivityLogAction;
+use App\Actions\Audit\PreserveActivityLogAction;
+use App\Models\AuditActivity;
 use Spatie\Activitylog\Actions\LogActivityAction;
-use Spatie\Activitylog\Models\Activity;
 
 return [
 
@@ -15,13 +15,13 @@ return [
      * When the clean command is executed, all recording activities older than
      * the number of days specified here will be deleted.
      */
-    'clean_after_days' => 365,
+    'clean_after_days' => PHP_INT_MAX,
 
     /*
      * If no log name is passed to the activity() helper
      * we use this default log name.
      */
-    'default_log_name' => 'default',
+    'default_log_name' => 'chronocert',
 
     /*
      * You can specify an auth driver here that gets user models.
@@ -40,7 +40,7 @@ return [
      * It should implement the Spatie\Activitylog\Contracts\Activity interface
      * and extend Illuminate\Database\Eloquent\Model.
      */
-    'activity_model' => Activity::class,
+    'activity_model' => AuditActivity::class,
 
     /*
      * These attributes will be excluded from logging for all models.
@@ -68,6 +68,6 @@ return [
      */
     'actions' => [
         'log_activity' => LogActivityAction::class,
-        'clean_log' => CleanActivityLogAction::class,
+        'clean_log' => PreserveActivityLogAction::class,
     ],
 ];
