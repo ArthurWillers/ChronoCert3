@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Administrators\CreateGlobalAdministrator;
 use App\Actions\Fortify\PasswordValidationRules;
 use App\Enums\AffiliationType;
 use App\Models\Affiliation;
@@ -10,7 +11,6 @@ use App\Rules\ValidCpf;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -28,6 +28,11 @@ use function Laravel\Prompts\text;
 class CreateInitialAdministrator extends Command
 {
     use PasswordValidationRules;
+
+    public function __construct(private CreateGlobalAdministrator $createGlobalAdministrator)
+    {
+        parent::__construct();
+    }
 
     /**
      * Create the initial global administrator through interactive prompts.
@@ -95,22 +100,13 @@ class CreateInitialAdministrator extends Command
             'password' => $this->passwordRules(),
         ])->validate();
 
-        [$user, $affiliation] = DB::transaction(function () use ($data): array {
-            $user = User::create([
-                'name' => $data['name'],
-                'cpf' => $data['cpf'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-            ]);
-            $affiliation = Affiliation::create([
-                'user_id' => $user->id,
-                'type' => AffiliationType::Administrator,
-                'email' => $data['operational_email'],
-                'starts_at' => today(),
-            ]);
-
-            return [$user, $affiliation];
-        });
+        [$user, $affiliation] = $this->createGlobalAdministrator->execute(
+            name: $data['name'],
+            cpf: $data['cpf'],
+            email: $data['email'],
+            operationalEmail: $data['operational_email'],
+            password: $data['password'],
+        );
 
         $this->components->info("Administrador criado: {$user->name} (vínculo #{$affiliation->id}).");
 
