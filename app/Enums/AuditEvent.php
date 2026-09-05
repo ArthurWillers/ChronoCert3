@@ -6,6 +6,7 @@ enum AuditEvent: string
 {
     case UserCreated = 'user.created';
     case UserUpdated = 'user.updated';
+    case UserDeleted = 'user.deleted';
     case UserCpfChanged = 'user.cpf_changed';
     case UserLoginEmailChanged = 'user.login_email_changed';
     case UserPasswordChanged = 'user.password_changed';
@@ -51,6 +52,7 @@ enum AuditEvent: string
         return match ($this) {
             self::UserCreated,
             self::UserUpdated,
+            self::UserDeleted,
             self::UserCpfChanged,
             self::UserLoginEmailChanged,
             self::UserPasswordChanged,
@@ -96,7 +98,7 @@ enum AuditEvent: string
     public function areaLabel(): string
     {
         return match ($this->area()) {
-            'identity' => 'Pessoas e contas',
+            'identity' => 'Usuários e contas',
             'affiliations' => 'Vínculos',
             'courses' => 'Cursos',
             'categories' => 'Categorias',
@@ -111,8 +113,9 @@ enum AuditEvent: string
     public function label(): string
     {
         return match ($this) {
-            self::UserCreated => 'Pessoa cadastrada',
-            self::UserUpdated => 'Dados da pessoa atualizados',
+            self::UserCreated => 'Usuário cadastrado',
+            self::UserUpdated => 'Dados do usuário atualizados',
+            self::UserDeleted => 'Usuário excluído',
             self::UserCpfChanged => 'CPF alterado',
             self::UserLoginEmailChanged => 'E-mail de login alterado',
             self::UserPasswordChanged => 'Senha alterada',
@@ -162,6 +165,7 @@ enum AuditEvent: string
             self::AffiliationDeactivated,
             self::CourseInactivated,
             self::CourseDeleted,
+            self::UserDeleted,
             self::CategoryInactivated,
             self::CategoryDeleted,
             self::SubmissionPurged => 'red',

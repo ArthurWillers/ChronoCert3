@@ -6,6 +6,7 @@ use App\Enums\AuditEvent;
 use App\Enums\AuditSource;
 use App\Models\Affiliation;
 use App\Models\AuditActivity;
+use App\Models\Course;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -31,6 +32,7 @@ class RecordActivity
         AuditSource $source = AuditSource::Web,
         ?string $sourceDetail = null,
     ): AuditActivity {
+        $contextCourseId ??= $activeAffiliation?->course_id;
         $activityReferences = $references;
 
         if ($activeAffiliation !== null && ! array_key_exists('actor_affiliation', $activityReferences)) {
@@ -116,7 +118,7 @@ class RecordActivity
         }
 
         if ($model instanceof Affiliation) {
-            $model->loadMissing('user');
+            $model->loadMissing(['user', 'course']);
 
             return array_filter([
                 'id' => $model->getKey(),
@@ -126,6 +128,15 @@ class RecordActivity
                 'user' => $model->user === null ? null : $this->snapshot($model->user),
                 'registration_number' => $model->getAttribute('registration_number'),
                 'course_id' => $model->getAttribute('course_id'),
+                'course' => $model->course === null ? null : $this->snapshot($model->course),
+            ], static fn (mixed $value): bool => $value !== null);
+        }
+
+        if ($model instanceof Course) {
+            return array_filter([
+                'id' => $model->getKey(),
+                'type' => 'course',
+                'name' => $model->name,
             ], static fn (mixed $value): bool => $value !== null);
         }
 
@@ -198,7 +209,7 @@ class RecordActivity
                 ? $this->withoutSensitiveValues($value)
                 : $this->redactSensitiveText(
                     $value,
-                    preserveNumericIdentifier: in_array($key, ['registration_number', 'course_code'], true),
+                    preserveNumericIdentifier: $key === 'registration_number',
                 );
         }
 

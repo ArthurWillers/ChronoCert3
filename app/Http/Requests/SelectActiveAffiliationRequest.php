@@ -32,13 +32,7 @@ class SelectActiveAffiliationRequest extends FormRequest
                 Rule::exists('affiliations', 'id')->where(function (Builder $query) use ($userId): void {
                     $query
                         ->where('user_id', $userId)
-                        ->whereNull('deactivated_at')
-                        ->whereDate('starts_at', '<=', today())
-                        ->where(function (Builder $query): void {
-                            $query
-                                ->whereNull('ends_at')
-                                ->orWhereDate('ends_at', '>=', today());
-                        });
+                        ->whereNull('deactivated_at');
                 }),
             ],
         ];

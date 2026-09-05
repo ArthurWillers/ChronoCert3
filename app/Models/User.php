@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\CpfCast;
+use App\Enums\AffiliationType;
 use App\Traits\HasInitials;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -38,5 +39,16 @@ class User extends Authenticatable
     public function affiliations(): HasMany
     {
         return $this->hasMany(Affiliation::class);
+    }
+
+    /**
+     * Determine whether this user holds a student affiliation in the course.
+     */
+    public function hasStudentAffiliationForCourse(int $courseId): bool
+    {
+        return $this->affiliations()
+            ->where('type', AffiliationType::Student)
+            ->where('course_id', $courseId)
+            ->exists();
     }
 }

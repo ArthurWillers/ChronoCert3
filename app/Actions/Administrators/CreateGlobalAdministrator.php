@@ -39,7 +39,6 @@ class CreateGlobalAdministrator
                 'user_id' => $user->id,
                 'type' => AffiliationType::Administrator,
                 'email' => $operationalEmail,
-                'starts_at' => today(),
             ]);
 
             $this->recordActivity->execute(
@@ -64,7 +63,6 @@ class CreateGlobalAdministrator
                 changes: [
                     'type' => ['old' => null, 'new' => $affiliation->type->label()],
                     'operational_email' => ['old' => null, 'new' => $affiliation->email],
-                    'starts_at' => ['old' => null, 'new' => $affiliation->starts_at->toDateString()],
                 ],
                 source: $source,
                 sourceDetail: $sourceDetail,

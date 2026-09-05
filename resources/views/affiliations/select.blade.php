@@ -9,7 +9,7 @@
             <x-card>
                 <x-empty-state
                     title="Nenhum vínculo disponível"
-                    description="Sua conta ainda não possui um vínculo institucional vigente."
+                    description="Sua conta ainda não possui um vínculo institucional ativo."
                     icon="heroicon-o-identification"
                 />
             </x-card>
@@ -40,20 +40,15 @@
                                             <x-heroicon-o-check-circle class="size-6 text-accent opacity-0 transition-opacity peer-checked:opacity-100" />
                                         </div>
                                         <dl class="mt-5 space-y-2 text-sm text-neutral-600">
+                                            @if ($affiliation->course)
+                                                <div class="flex items-center gap-2">
+                                                    <dt class="font-medium text-neutral-800">Curso:</dt>
+                                                    <dd class="truncate">{{ $affiliation->course->name }}</dd>
+                                                </div>
+                                            @endif
                                             <div class="flex items-center gap-2">
                                                 <dt class="font-medium text-neutral-800">E-mail operacional:</dt>
                                                 <dd class="truncate">{{ $affiliation->email }}</dd>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <dt class="font-medium text-neutral-800">Vigência:</dt>
-                                                <dd>
-                                                    {{ $affiliation->starts_at->format('d/m/Y') }}
-                                                    @if ($affiliation->ends_at)
-                                                        até {{ $affiliation->ends_at->format('d/m/Y') }}
-                                                    @else
-                                                        em aberto
-                                                    @endif
-                                                </dd>
                                             </div>
                                         </dl>
                                     </div>

@@ -1,13 +1,19 @@
 @php
-    $hasInitialToast = session()->has('toast') || session()->has('success');
+    $hasInitialToast = session()->has('toast') || session()->has('success') || session()->has('warning') || session()->has('error');
 
     if (session()->has('toast')) {
         $toast = session('toast');
         $initialType = $toast['type'] ?? 'info';
         $initialMessage = $toast['message'] ?? '';
-    } else {
+    } elseif (session()->has('success')) {
         $initialType = 'success';
         $initialMessage = session('success', '');
+    } elseif (session()->has('warning')) {
+        $initialType = 'warning';
+        $initialMessage = session('warning', '');
+    } else {
+        $initialType = 'error';
+        $initialMessage = session('error', '');
     }
 @endphp
 

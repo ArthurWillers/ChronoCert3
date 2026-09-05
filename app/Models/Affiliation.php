@@ -11,10 +11,10 @@ class Affiliation extends Model
 {
     protected $fillable = [
         'user_id',
+        'course_id',
         'type',
         'email',
-        'starts_at',
-        'ends_at',
+        'registration_number',
         'deactivated_at',
         'last_used_at',
     ];
@@ -23,29 +23,39 @@ class Affiliation extends Model
     {
         return [
             'type' => AffiliationType::class,
-            'starts_at' => 'date',
-            'ends_at' => 'date',
             'deactivated_at' => 'datetime',
             'last_used_at' => 'datetime',
         ];
     }
 
     /**
-     * Limit the query to affiliations that are currently valid for operation.
+     * Limit the query to affiliations that are available for operation.
      *
      * @param  Builder<Affiliation>  $query
      * @return Builder<Affiliation>
      */
     public function scopeValid(Builder $query): Builder
     {
-        return $query
-            ->whereNull('deactivated_at')
-            ->whereDate('starts_at', '<=', today())
-            ->where(function (Builder $query): void {
-                $query
-                    ->whereNull('ends_at')
-                    ->orWhereDate('ends_at', '>=', today());
-            });
+        return $query->active();
+    }
+
+    /**
+     * Limit the query to affiliations that have not been manually deactivated.
+     *
+     * @param  Builder<Affiliation>  $query
+     * @return Builder<Affiliation>
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('deactivated_at');
+    }
+
+    /**
+     * Determine whether the affiliation is available for operation.
+     */
+    public function isActive(): bool
+    {
+        return $this->deactivated_at === null;
     }
 
     /**
@@ -54,5 +64,13 @@ class Affiliation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 }

@@ -17,6 +17,16 @@
             <x-nav-link :href="route('dashboard')" :current="request()->routeIs('dashboard')">
                 <x-heroicon-o-home /> Início
             </x-nav-link>
+            @can('viewAny', \App\Models\User::class)
+                <x-nav-link :href="route('users.index')" :current="request()->routeIs('users.*')">
+                    <x-heroicon-o-users /> Usuários
+                </x-nav-link>
+            @endcan
+            @can('viewAny', \App\Models\Course::class)
+                <x-nav-link :href="route('courses.index')" :current="request()->routeIs('courses.*')">
+                    <x-heroicon-o-academic-cap /> Cursos
+                </x-nav-link>
+            @endcan
             @can('viewAny', \App\Models\AuditActivity::class)
                 <x-nav-link :href="route('audit.index')" :current="request()->routeIs('audit.*')">
                     <x-heroicon-o-clipboard-document-list /> Auditoria

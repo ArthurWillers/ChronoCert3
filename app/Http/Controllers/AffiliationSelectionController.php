@@ -23,8 +23,9 @@ class AffiliationSelectionController extends Controller
         $affiliations = $request->user()
             ->affiliations()
             ->valid()
+            ->with('course')
             ->orderBy('type')
-            ->orderBy('starts_at')
+            ->orderBy('id')
             ->get();
 
         if ($affiliations->count() === 1) {

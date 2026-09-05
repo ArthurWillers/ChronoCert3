@@ -48,7 +48,7 @@
                                     · Matrícula {{ $actorAffiliation['registration_number'] }}
                                 @endif
                                 @if (filled($actorAffiliation['course_id'] ?? null))
-                                    · Curso técnico #{{ $actorAffiliation['course_id'] }}
+                                    · {{ data_get($actorAffiliation, 'course.name') ?? 'Curso técnico #' . $actorAffiliation['course_id'] }}
                                 @endif
                             </p>
                         </div>
@@ -108,7 +108,7 @@
                         @php
                             $label = match ($name) {
                                 'subject' => 'Registro afetado',
-                                'user' => 'Pessoa',
+                                'user' => 'Usuário',
                                 'causer' => 'Responsável',
                                 'course' => 'Curso',
                                 'category' => 'Categoria',
@@ -128,7 +128,7 @@
                                 isset($reference['id']) ? 'ID técnico: #' . $reference['id'] : null,
                                 $name !== 'actor_affiliation' ? ($reference['affiliation_type_label'] ?? null) : null,
                                 isset($reference['registration_number']) ? 'Matrícula: ' . $reference['registration_number'] : null,
-                                isset($reference['course_id']) ? 'Curso técnico: #' . $reference['course_id'] : null,
+                                isset($reference['course_id']) ? 'Curso: ' . (data_get($reference, 'course.name') ?? '#' . $reference['course_id']) : null,
                             ]);
                         @endphp
                         <div class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -156,18 +156,19 @@
                                     $attributeLabel = match ($attribute) {
                                         'name' => 'Nome',
                                         'type' => 'Tipo de vínculo',
-                                        'starts_at' => 'Início da vigência',
-                                        'ends_at' => 'Fim da vigência',
                                         'deactivated_at' => 'Desativação',
                                         'last_used_at' => 'Último uso',
                                         'registration_number' => 'Matrícula',
-                                        'course_id' => 'Curso',
+                                        'course', 'course_id' => 'Curso',
                                         'category_id' => 'Categoria',
                                         'title' => 'Título',
                                         'status' => 'Situação',
                                         'hours', 'approved_hours' => 'Horas',
+                                        'required_acc_hours' => 'Carga horária total exigida',
+                                        'minimum_area_percentage' => 'Percentual mínimo na área',
                                         'cpf' => 'CPF',
                                         'email' => 'E-mail',
+                                        'operational_email' => 'E-mail operacional',
                                         'password' => 'Senha',
                                         default => 'Dado atualizado',
                                     };
