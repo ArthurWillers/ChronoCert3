@@ -7,7 +7,9 @@
     <main class="flex flex-1 items-center justify-center p-4 sm:p-8">
         <div class="w-full max-w-lg">
             <a href="{{ url('/') }}" class="mb-8 flex items-center justify-center gap-3 text-xl font-bold text-accent">
-                <span class="flex size-11 items-center justify-center rounded-xl bg-accent text-white shadow-sm">CC</span>
+                <span class="flex size-11 items-center justify-center rounded-xl bg-neutral-800 shadow-sm">
+                    <x-layout.app-logo-icon class="w-8 h-8 shrink-0" />
+                </span>
                 ChronoCert
             </a>
             <x-card class="p-6 sm:p-8">
