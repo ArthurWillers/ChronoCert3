@@ -24,7 +24,7 @@ class DeleteCourse
 
             if (! $course->canBeDeleted()) {
                 throw ValidationException::withMessages([
-                    'course' => 'Este curso possui vínculos institucionais e deve ser inativado, não excluído.',
+                    'course' => 'Este curso possui vínculos institucionais ou categorias e deve ser inativado, não excluído.',
                 ]);
             }
 

@@ -144,6 +144,13 @@
                 </dl>
             </x-card>
 
+            @if ($auditActivity->getProperty('dependency_check.checked'))
+                <x-card>
+                    <h2 class="text-sm font-semibold text-neutral-900">Verificação de exclusão</h2>
+                    <p class="mt-2 text-sm text-neutral-600">Nenhuma dependência de domínio encontrada no momento da exclusão. O curso e a categoria estão preservados nas referências do evento.</p>
+                </x-card>
+            @endif
+
             @if ($auditActivity->changes() !== [])
                 <x-card>
                     <h2 class="text-lg font-semibold text-neutral-900">Dados e alterações</h2>
@@ -160,7 +167,15 @@
                                         'last_used_at' => 'Último uso',
                                         'registration_number' => 'Matrícula',
                                         'course', 'course_id' => 'Curso',
-                                        'category_id' => 'Categoria',
+                                        'category_id', 'acc_category_id' => 'Categoria',
+                                        'description' => 'Descrição',
+                                        'max_hours' => 'Limite de horas',
+                                        'accepts_multiple' => 'Aceita múltiplas submissões',
+                                        'document_required' => 'Documento obrigatório',
+                                        'allowed_mime_types' => 'Formatos aceitos (MIME)',
+                                        'max_file_size_bytes' => 'Tamanho máximo em bytes',
+                                        'guidance' => 'Orientação ao discente',
+                                        'deactivation_reason' => 'Motivo da inativação',
                                         'title' => 'Título',
                                         'status' => 'Situação',
                                         'hours', 'approved_hours' => 'Horas',
@@ -173,17 +188,22 @@
                                         default => 'Dado atualizado',
                                     };
                                 @endphp
+                                @php
+                                    $formatValue = static fn (mixed $value): string => is_bool($value)
+                                        ? ($value ? 'Sim' : 'Não')
+                                        : (is_array($value) ? implode(', ', \Illuminate\Support\Arr::flatten($value)) : (string) ($value ?? '—'));
+                                @endphp
                                 <p class="text-sm font-medium text-neutral-800">{{ $attributeLabel }}</p>
                                 @if (is_array($change) && ($change['changed'] ?? false) === true)
                                     <p class="text-sm text-neutral-500 sm:col-span-2">Campo protegido alterado.</p>
                                 @else
                                     <p class="text-sm text-red-700">
                                         <span class="mr-1 text-xs font-medium text-neutral-400 sm:hidden">Anterior:</span>
-                                        {{ is_array($change) ? ($change['old'] ?? '—') : '—' }}
+                                        {{ $formatValue(is_array($change) ? ($change['old'] ?? null) : null) }}
                                     </p>
                                     <p class="text-sm text-green-700">
                                         <span class="mr-1 text-xs font-medium text-neutral-400 sm:hidden">Atual:</span>
-                                        {{ is_array($change) ? ($change['new'] ?? '—') : $change }}
+                                        {{ $formatValue(is_array($change) ? ($change['new'] ?? null) : $change) }}
                                     </p>
                                 @endif
                             </div>

@@ -43,12 +43,18 @@ class Course extends Model
         return $this->hasMany(Affiliation::class);
     }
 
+    /** @return HasMany<AccCategory, $this> */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(AccCategory::class);
+    }
+
     /**
      * Determine whether domain records still depend on this course.
      */
     public function canBeDeleted(): bool
     {
-        return ! $this->affiliations()->exists();
+        return ! $this->affiliations()->exists() && ! $this->categories()->exists();
     }
 
     /**

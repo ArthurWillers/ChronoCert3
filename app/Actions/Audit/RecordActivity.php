@@ -4,6 +4,7 @@ namespace App\Actions\Audit;
 
 use App\Enums\AuditEvent;
 use App\Enums\AuditSource;
+use App\Models\AccCategory;
 use App\Models\Affiliation;
 use App\Models\AuditActivity;
 use App\Models\Course;
@@ -19,6 +20,7 @@ class RecordActivity
      *
      * @param  array<string, Model|array<string, mixed>>  $references
      * @param  array<string, mixed>  $changes
+     * @param  array{checked: bool, has_dependencies: bool}|null  $dependencyCheck
      */
     public function execute(
         AuditEvent $event,
@@ -31,9 +33,14 @@ class RecordActivity
         ?string $reason = null,
         AuditSource $source = AuditSource::Web,
         ?string $sourceDetail = null,
+        ?array $dependencyCheck = null,
     ): AuditActivity {
         $contextCourseId ??= $activeAffiliation?->course_id;
         $activityReferences = $references;
+
+        if ($causer !== null) {
+            $activityReferences['causer'] = $causer;
+        }
 
         if ($activeAffiliation !== null && ! array_key_exists('actor_affiliation', $activityReferences)) {
             $activityReferences = [
@@ -52,11 +59,16 @@ class RecordActivity
                 'actor_affiliation_id' => $activeAffiliation?->getKey(),
             ], static fn (mixed $value): bool => $value !== null),
             'references' => [
-                'subject' => $this->snapshot($subject),
+                'subject' => $this->withoutSensitiveValues($this->snapshot($subject)),
                 ...$this->snapshots($activityReferences),
             ],
             'changes' => $this->safeChanges($changes),
         ];
+
+        if ($event === AuditEvent::CategoryDeleted) {
+            $properties['subject_snapshot'] = $properties['references']['subject'];
+            $properties['dependency_check'] = $dependencyCheck;
+        }
 
         if (filled($reason)) {
             $properties['reason'] = $this->redactSensitiveText($reason);
@@ -97,7 +109,7 @@ class RecordActivity
 
         foreach ($references as $name => $reference) {
             $snapshots[$name] = $reference instanceof Model
-                ? $this->snapshot($reference)
+                ? $this->withoutSensitiveValues($this->snapshot($reference))
                 : $this->withoutSensitiveValues($reference);
         }
 
@@ -130,6 +142,17 @@ class RecordActivity
                 'course_id' => $model->getAttribute('course_id'),
                 'course' => $model->course === null ? null : $this->snapshot($model->course),
             ], static fn (mixed $value): bool => $value !== null);
+        }
+
+        if ($model instanceof AccCategory) {
+            $model->loadMissing('createdByAffiliation');
+
+            return [
+                'type' => 'category',
+                ...$model->academicSnapshot(),
+                'created_by_affiliation_id' => $model->created_by_affiliation_id,
+                'created_by_affiliation' => $this->snapshot($model->createdByAffiliation),
+            ];
         }
 
         if ($model instanceof Course) {
@@ -238,6 +261,10 @@ class RecordActivity
 
         $patterns = ['/\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/i'];
         $replacements = ['[e-mail protegido]'];
+        $patterns[] = '~\b(?:https?|ftp)://[^\s<>]+~i';
+        $replacements[] = '[URL protegida]';
+        $patterns[] = '~(?<!\S)(?:/[\w.\-]+)+/?|\b[A-Z]:\\\\[^\s<>]+~i';
+        $replacements[] = '[caminho protegido]';
 
         if (! $preserveNumericIdentifier) {
             $patterns[] = '/(?<!\\d)\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}(?!\\d)/';

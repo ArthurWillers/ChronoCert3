@@ -27,6 +27,11 @@
                     <x-heroicon-o-academic-cap /> Cursos
                 </x-nav-link>
             @endcan
+            @can('viewAny', \App\Models\AccCategory::class)
+                <x-nav-link :href="route('categories.index')" :current="request()->routeIs('categories.*')">
+                    <x-heroicon-o-tag /> Categorias de ACC
+                </x-nav-link>
+            @endcan
             @can('viewAny', \App\Models\AuditActivity::class)
                 <x-nav-link :href="route('audit.index')" :current="request()->routeIs('audit.*')">
                     <x-heroicon-o-clipboard-document-list /> Auditoria

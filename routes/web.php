@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccCategoryController;
 use App\Http\Controllers\AffiliationSelectionController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\CourseController;
@@ -33,6 +34,10 @@ Route::middleware('auth')->group(function (): void {
         Route::patch('/courses/{course}/reactivate', [CourseController::class, 'reactivate'])
             ->name('courses.reactivate');
         Route::resource('courses', CourseController::class)->except('show');
+
+        Route::patch('/categories/{category}/deactivate', [AccCategoryController::class, 'deactivate'])->name('categories.deactivate');
+        Route::patch('/categories/{category}/reactivate', [AccCategoryController::class, 'reactivate'])->name('categories.reactivate');
+        Route::resource('categories', AccCategoryController::class);
 
         Route::get('/users/lookup', [UserController::class, 'lookup'])->name('users.lookup');
         Route::patch('/users/{user}/identity', [UserController::class, 'updateIdentity'])->name('users.identity.update');
