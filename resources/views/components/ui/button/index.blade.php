@@ -15,7 +15,7 @@
     };
 
     $baseClasses =
-        'button-scale cursor-pointer inline-flex items-center justify-center font-semibold px-3 py-2 min-h-11 text-base lg:text-sm [&>svg]:size-5 lg:[&>svg]:size-4 rounded-lg disabled:opacity-75 disabled:cursor-default gap-1.5 lg:gap-1';
+        'cursor-pointer inline-flex items-center justify-center font-semibold px-3 py-2 min-h-11 text-base lg:text-sm [&>svg]:size-5 lg:[&>svg]:size-4 rounded-lg disabled:opacity-75 disabled:cursor-default gap-1.5 lg:gap-1';
 
     $colorClasses = match ($color) {
         'red' => 'bg-red-500 hover:bg-red-700 text-white border-transparent',
