@@ -5,6 +5,7 @@ namespace App\Actions\Audit;
 use App\Enums\AuditEvent;
 use App\Enums\AuditSource;
 use App\Models\AccCategory;
+use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\AuditActivity;
 use App\Models\Course;
@@ -152,6 +153,18 @@ class RecordActivity
                 ...$model->academicSnapshot(),
                 'created_by_affiliation_id' => $model->created_by_affiliation_id,
                 'created_by_affiliation' => $this->snapshot($model->createdByAffiliation),
+            ];
+        }
+
+        if ($model instanceof AccSubmission) {
+            return [
+                'id' => $model->getKey(),
+                'type' => 'submission',
+                'origin' => $model->origin->value,
+                'status' => $model->status->value,
+                'student_affiliation_id' => $model->student_affiliation_id,
+                'submitted_by_affiliation_id' => $model->submitted_by_affiliation_id,
+                'submitted_at' => $model->submitted_at?->toIso8601String(),
             ];
         }
 

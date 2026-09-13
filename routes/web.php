@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccCategoryController;
+use App\Http\Controllers\AccSubmissionController;
 use App\Http\Controllers\AffiliationSelectionController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\CourseController;
@@ -29,6 +30,19 @@ Route::middleware('auth')->group(function (): void {
         ->name('audit.show');
 
     Route::middleware('active-affiliation')->group(function (): void {
+        Route::get('/submissions', [AccSubmissionController::class, 'index'])->name('submissions.index');
+        Route::get('/submissions/create', [AccSubmissionController::class, 'create'])->name('submissions.create');
+        Route::post('/submissions', [AccSubmissionController::class, 'store'])->name('submissions.store');
+        Route::get('/submissions/students/{studentAffiliation}/create', [AccSubmissionController::class, 'createFor'])
+            ->name('submissions.students.create');
+        Route::post('/submissions/students/{studentAffiliation}', [AccSubmissionController::class, 'storeFor'])
+            ->name('submissions.students.store');
+        Route::get('/submissions/{submission}/document', [AccSubmissionController::class, 'document'])
+            ->name('submissions.document');
+        Route::get('/submissions/{submission}/download', [AccSubmissionController::class, 'download'])
+            ->name('submissions.download');
+        Route::get('/submissions/{submission}', [AccSubmissionController::class, 'show'])->name('submissions.show');
+
         Route::patch('/courses/{course}/deactivate', [CourseController::class, 'deactivate'])
             ->name('courses.deactivate');
         Route::patch('/courses/{course}/reactivate', [CourseController::class, 'reactivate'])

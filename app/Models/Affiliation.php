@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use App\Enums\AffiliationType;
+use Database\Factories\AffiliationFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Affiliation extends Model
 {
+    /** @use HasFactory<AffiliationFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'course_id',

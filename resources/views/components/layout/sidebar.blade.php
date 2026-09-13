@@ -17,6 +17,11 @@
             <x-nav-link :href="route('dashboard')" :current="request()->routeIs('dashboard')">
                 <x-heroicon-o-home /> Início
             </x-nav-link>
+            @can('viewAny', \App\Models\AccSubmission::class)
+                <x-nav-link :href="route('submissions.index')" :current="request()->routeIs('submissions.*')">
+                    <x-heroicon-o-document-arrow-up /> Comprovantes
+                </x-nav-link>
+            @endcan
             @can('viewAny', \App\Models\User::class)
                 <x-nav-link :href="route('users.index')" :current="request()->routeIs('users.*')">
                     <x-heroicon-o-users /> Usuários

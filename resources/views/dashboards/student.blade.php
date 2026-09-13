@@ -20,7 +20,7 @@
             <x-card>
                 <x-section-header title="Meu percurso acadêmico" icon="heroicon-o-chart-bar" />
                 <p class="text-sm leading-6 text-neutral-600">
-                    Seus comprovantes enviados e o total de horas aproveitadas aparecerão nesta área.
+                    Consulte seus comprovantes enviados. O total de horas aproveitadas será incluído após a etapa de análise.
                 </p>
             </x-card>
         </div>

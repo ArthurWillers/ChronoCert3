@@ -20,7 +20,7 @@
             <x-card>
                 <x-section-header title="Operação da coordenação" icon="heroicon-o-clipboard-document-list" />
                 <p class="text-sm leading-6 text-neutral-600">
-                    A fila de comprovantes, os discentes e as categorias do curso aparecerão nesta área.
+                    Consulte comprovantes do curso e registre documentos diretamente para discentes. A fila de análise será incluída na próxima etapa.
                 </p>
             </x-card>
         </div>
