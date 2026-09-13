@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
 
 #[Fillable(['name', 'description', 'max_hours', 'guidance'])]
@@ -35,6 +36,12 @@ class AccCategory extends Model
     public function createdByAffiliation(): BelongsTo
     {
         return $this->belongsTo(Affiliation::class, 'created_by_affiliation_id');
+    }
+
+    /** @return HasMany<AccReview, $this> */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(AccReview::class);
     }
 
     /** @param Builder<AccCategory> $query

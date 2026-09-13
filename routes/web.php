@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AccCategoryController;
+use App\Http\Controllers\AccReviewController;
+use App\Http\Controllers\AccStatementController;
 use App\Http\Controllers\AccSubmissionController;
 use App\Http\Controllers\AffiliationSelectionController;
 use App\Http\Controllers\AuditController;
@@ -30,6 +32,7 @@ Route::middleware('auth')->group(function (): void {
         ->name('audit.show');
 
     Route::middleware('active-affiliation')->group(function (): void {
+        Route::get('/acc-statement', AccStatementController::class)->name('statements.index');
         Route::get('/submissions', [AccSubmissionController::class, 'index'])->name('submissions.index');
         Route::get('/submissions/create', [AccSubmissionController::class, 'create'])->name('submissions.create');
         Route::post('/submissions', [AccSubmissionController::class, 'store'])->name('submissions.store');
@@ -37,6 +40,14 @@ Route::middleware('auth')->group(function (): void {
             ->name('submissions.students.create');
         Route::post('/submissions/students/{studentAffiliation}', [AccSubmissionController::class, 'storeFor'])
             ->name('submissions.students.store');
+        Route::post('/submissions/{submission}/review', [AccReviewController::class, 'store'])
+            ->name('submissions.review.store');
+        Route::patch('/reviews/{review}', [AccReviewController::class, 'update'])
+            ->name('reviews.update');
+        Route::post('/reviews/{review}/approve', [AccReviewController::class, 'approve'])
+            ->name('reviews.approve');
+        Route::post('/reviews/{review}/reject', [AccReviewController::class, 'reject'])
+            ->name('reviews.reject');
         Route::get('/submissions/{submission}/document', [AccSubmissionController::class, 'document'])
             ->name('submissions.document');
         Route::get('/submissions/{submission}/download', [AccSubmissionController::class, 'download'])

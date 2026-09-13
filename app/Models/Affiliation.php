@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Affiliation extends Model
 {
@@ -77,5 +78,17 @@ class Affiliation extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    /** @return HasMany<AccSubmission, $this> */
+    public function submissionsAsStudent(): HasMany
+    {
+        return $this->hasMany(AccSubmission::class, 'student_affiliation_id');
+    }
+
+    /** @return HasMany<AccReview, $this> */
+    public function reviewedAccSubmissions(): HasMany
+    {
+        return $this->hasMany(AccReview::class, 'reviewer_affiliation_id');
     }
 }

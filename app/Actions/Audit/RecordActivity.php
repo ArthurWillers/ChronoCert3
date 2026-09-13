@@ -5,6 +5,7 @@ namespace App\Actions\Audit;
 use App\Enums\AuditEvent;
 use App\Enums\AuditSource;
 use App\Models\AccCategory;
+use App\Models\AccReview;
 use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\AuditActivity;
@@ -154,6 +155,20 @@ class RecordActivity
                 'created_by_affiliation_id' => $model->created_by_affiliation_id,
                 'created_by_affiliation' => $this->snapshot($model->createdByAffiliation),
             ];
+        }
+
+        if ($model instanceof AccReview) {
+            return array_filter([
+                'id' => $model->getKey(),
+                'type' => 'review',
+                'acc_submission_id' => $model->acc_submission_id,
+                'reviewer_affiliation_id' => $model->reviewer_affiliation_id,
+                'acc_category_id' => $model->acc_category_id,
+                'normalized_title' => $model->normalized_title,
+                'approved_hours' => $model->approved_hours,
+                'started_at' => $model->started_at?->toIso8601String(),
+                'completed_at' => $model->completed_at?->toIso8601String(),
+            ], static fn (mixed $value): bool => $value !== null);
         }
 
         if ($model instanceof AccSubmission) {

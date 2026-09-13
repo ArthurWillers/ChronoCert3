@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -74,6 +75,12 @@ class AccSubmission extends Model implements HasMedia
     public function submittedByAffiliation(): BelongsTo
     {
         return $this->belongsTo(Affiliation::class, 'submitted_by_affiliation_id');
+    }
+
+    /** @return HasOne<AccReview, $this> */
+    public function review(): HasOne
+    {
+        return $this->hasOne(AccReview::class, 'acc_submission_id');
     }
 
     /**

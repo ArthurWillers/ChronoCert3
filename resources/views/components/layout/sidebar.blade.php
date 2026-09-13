@@ -21,6 +21,9 @@
                 <x-nav-link :href="route('submissions.index')" :current="request()->routeIs('submissions.*')">
                     <x-heroicon-o-document-arrow-up /> Comprovantes
                 </x-nav-link>
+                <x-nav-link :href="route('statements.index')" :current="request()->routeIs('statements.*')">
+                    <x-heroicon-o-chart-bar-square /> Extrato de ACC
+                </x-nav-link>
             @endcan
             @can('viewAny', \App\Models\User::class)
                 <x-nav-link :href="route('users.index')" :current="request()->routeIs('users.*')">

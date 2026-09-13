@@ -11,6 +11,8 @@ use App\Enums\SubmissionOrigin;
 use App\Http\Requests\IndexAccSubmissionRequest;
 use App\Http\Requests\StoreAccSubmissionRequest;
 use App\Http\Requests\StoreCoordinatorAccSubmissionRequest;
+use App\Models\AccCategory;
+use App\Models\AccReview;
 use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\Course;
@@ -140,11 +142,25 @@ class AccSubmissionController extends Controller
             'studentAffiliation.user',
             'studentAffiliation.course',
             'submittedByAffiliation.user',
+            'review.category',
+            'review.reviewerAffiliation.user',
             'media',
         ]);
         $this->authorize('view', $submission);
+        $affiliation = $this->activeAffiliation($request);
+        $categories = $affiliation->type === AffiliationType::Coordinator
+            ? AccCategory::query()->active()->visibleTo($affiliation)->orderBy('name')->get()
+            : collect();
+        $canStartReview = $request->user()->can('create', [AccReview::class, $submission]);
+        $canUpdateReview = $submission->review !== null
+            && $request->user()->can('update', $submission->review);
 
-        return view('submissions.show', compact('submission'));
+        return view('submissions.show', compact(
+            'submission',
+            'categories',
+            'canStartReview',
+            'canUpdateReview',
+        ));
     }
 
     /**
