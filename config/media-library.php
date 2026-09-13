@@ -72,7 +72,9 @@ return [
      * in `shell.php.jpg`) is rejected even if the final extension is allowed.
      * Leave `null` to disable allowlisting.
      */
-    'allowed_extensions' => ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
+    'allowed_extensions' => array_values(array_unique(array_merge(
+        ...array_column(config('acc.documents.accepted_file_types'), 'extensions'),
+    ))),
 
     /*
      * This queue connection will be used to generate derived and responsive images.

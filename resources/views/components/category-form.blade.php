@@ -1,5 +1,11 @@
 @props(['category' => null])
 
+@php
+    $acceptedDocumentTypes = collect(config('acc.documents.accepted_file_types', []))
+        ->pluck('label')
+        ->join(', ');
+@endphp
+
 <div class="space-y-6">
     <x-form-input name="name" label="Nome da categoria" :value="$category?->name" required maxlength="255" autofocus autocomplete="off" />
     <x-form-textarea name="description" label="Descrição" :value="$category?->description" help="Descreva as atividades abrangidas por esta categoria." />
@@ -14,7 +20,7 @@
 
     <x-callout color="neutral" title="Documentos">
         Documentos são opcionais e podem ser anexados em múltiplos arquivos.
-        Aceitos: {{ implode(', ', config('acc.documents.mime_types')) }}. Limite de 10 MB por arquivo.
+        Aceitos: {{ $acceptedDocumentTypes }}. Limite de 10 MB por arquivo.
     </x-callout>
 
     <x-form-textarea name="guidance" label="Orientação ao discente" :value="$category?->guidance" help="Explique os requisitos e cuidados necessários para esta categoria." />

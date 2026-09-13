@@ -89,7 +89,7 @@ class AccCategory extends Model
             'max_hours' => $this->max_hours,
             'accepts_multiple' => config('acc.documents.accepts_multiple'),
             'document_required' => config('acc.documents.required'),
-            'allowed_mime_types' => array_keys(config('acc.documents.mime_types')),
+            'allowed_mime_types' => array_keys(config('acc.documents.accepted_file_types')),
             'max_file_size_bytes' => config('acc.documents.max_file_size_bytes'),
         ];
     }

@@ -2,15 +2,14 @@
 
 return [
     'documents' => [
-        'accepts_multiple' => true,
-        'required' => false,
+        'accepts_multiple' => false,
+        'required' => true,
         'max_file_size_bytes' => 10 * 1024 * 1024,
-        'mime_types' => [
-            'application/pdf' => 'PDF',
-            'image/jpeg' => 'JPEG',
-            'image/png' => 'PNG',
-            'image/webp' => 'WebP',
-            'image/bmp' => 'BMP',
+        'accepted_file_types' => [
+            'application/pdf' => ['label' => 'PDF', 'extensions' => ['pdf']],
+            'image/jpeg' => ['label' => 'JPEG', 'extensions' => ['jpg', 'jpeg']],
+            'image/png' => ['label' => 'PNG', 'extensions' => ['png']],
+            'image/webp' => ['label' => 'WebP', 'extensions' => ['webp']],
         ],
     ],
 ];

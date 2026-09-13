@@ -30,7 +30,7 @@
                 <h2 class="text-base font-semibold text-neutral-900">Documentos</h2>
                 <p class="mt-3 text-sm leading-6 text-neutral-600">Documentos são opcionais. É permitido anexar múltiplos arquivos, com até 10 MB por arquivo.</p>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    @foreach (config('acc.documents.mime_types') as $format)
+                    @foreach (collect(config('acc.documents.accepted_file_types', []))->pluck('label') as $format)
                         <x-badge color="neutral">{{ $format }}</x-badge>
                     @endforeach
                 </div>
