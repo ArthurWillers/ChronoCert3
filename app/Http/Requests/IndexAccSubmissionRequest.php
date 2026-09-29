@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\SubmissionStatus;
+use App\Models\AccCategory;
 use App\Models\AccSubmission;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,6 +28,7 @@ class IndexAccSubmissionRequest extends FormRequest
     {
         return [
             'status' => ['nullable', 'string', Rule::in(SubmissionStatus::values())],
+            'acc_category_id' => ['nullable', 'integer', Rule::exists(AccCategory::class, 'id')],
         ];
     }
 }

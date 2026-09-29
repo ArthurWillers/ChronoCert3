@@ -1,9 +1,14 @@
 <x-layouts.app>
-    <x-page-header :title="$user->name" description="Dados da conta e vínculos institucionais deste usuário.">
+    <x-page-header
+        :title="$user->name"
+        :description="$activeAffiliation->type === \App\Enums\AffiliationType::Coordinator
+            ? 'Consulte o vínculo, os documentos e o resumo acadêmico deste discente.'
+            : 'Dados da conta e vínculos institucionais deste usuário.'"
+    >
         <x-back-button :fallback="route('users.index')" />
-        @can('addAffiliation', $user)
+        @if ($activeAffiliation->type === \App\Enums\AffiliationType::Administrator)
             <x-button :href="route('users.affiliations.create', $user)" color="accent"><x-heroicon-o-plus class="size-4" /> Adicionar vínculo</x-button>
-        @endcan
+        @endif
         @can('delete', $user)
             <x-modal.delete
                 :action="route('users.destroy', $user)"
@@ -16,7 +21,7 @@
         @endcan
     </x-page-header>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div class="mt-5 max-w-4xl">
         <div class="space-y-6">
             <x-card>
                 <div class="flex items-start justify-between gap-4">
@@ -67,7 +72,7 @@
             @endcan
 
             <x-card class="!p-0">
-                <div class="flex flex-col justify-between gap-3 border-b border-neutral-100 px-5 py-4 sm:flex-row sm:items-center">
+                <div class="flex flex-col justify-between gap-3 border-b border-neutral-100 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
                     <div>
                         <h2 class="text-base font-semibold text-neutral-900">Vínculos</h2>
                         <p class="mt-1 text-sm text-neutral-500">Histórico de atuações acadêmicas e institucionais.</p>
@@ -82,7 +87,7 @@
 
                 <div class="divide-y divide-neutral-100">
                     @forelse ($affiliations as $affiliation)
-                        <div class="p-5">
+                        <div class="p-4 sm:p-5">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div class="min-w-0">
                                     <div class="flex flex-wrap items-center gap-2">
@@ -93,7 +98,7 @@
                                     </div>
                                     <p class="mt-1 text-sm text-neutral-600">{{ $affiliation->course?->name ?? 'Atuação institucional global' }}</p>
                                 </div>
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex flex-wrap gap-1.5">
                                     @can('update', $affiliation)
                                         <x-button :href="route('users.affiliations.edit', [$user, $affiliation])" color="outline">Editar</x-button>
                                     @endcan
@@ -124,6 +129,69 @@
                                     <dd class="mt-1 break-all font-medium text-neutral-900">{{ $affiliation->email }}</dd>
                                 </div>
                             </dl>
+
+                            @if ($activeAffiliation->type === \App\Enums\AffiliationType::Coordinator && $affiliation->type === \App\Enums\AffiliationType::Student)
+                                @php($summary = $studentSummaries->get($affiliation->getKey()))
+
+                                <section class="mt-5 border-t border-neutral-100 pt-4" aria-labelledby="documents-{{ $affiliation->id }}">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <h3 id="documents-{{ $affiliation->id }}" class="text-sm font-semibold text-neutral-900">Resumo de documentos</h3>
+                                            <p class="mt-1 text-sm text-neutral-500">A carga do certificado é preservada no documento. O total é limitado apenas no cálculo de cada categoria.</p>
+                                        </div>
+                                        @can('createFor', [\App\Models\AccSubmission::class, $affiliation])
+                                            <x-button :href="route('submissions.students.create', $affiliation)" color="accent">
+                                                <x-heroicon-o-arrow-up-tray /> Registrar documento
+                                            </x-button>
+                                        @endcan
+                                    </div>
+
+                                    <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div class="rounded-lg bg-neutral-50 p-3">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Documentos aceitos</p>
+                                            <p class="mt-1 text-lg font-semibold text-neutral-900">{{ $summary['acceptedDocumentsCount'] }}</p>
+                                        </div>
+                                        <div class="rounded-lg bg-neutral-50 p-3">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Horas nas categorias</p>
+                                            <p class="mt-1 text-lg font-semibold text-neutral-900">{{ number_format($summary['recognizedHours'], 2, ',', '.') }} h</p>
+                                        </div>
+                                        @if ($summary['minimumAreaHours'] !== null)
+                                            <div class="rounded-lg bg-neutral-50 p-3">
+                                                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Atividades na área</p>
+                                                <p class="mt-1 text-lg font-semibold text-neutral-900">{{ number_format($summary['recognizedAreaHours'], 2, ',', '.') }} h <span class="text-sm font-medium text-neutral-500">de {{ number_format($summary['minimumAreaHours'], 2, ',', '.') }} h</span></p>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <a href="{{ route('submissions.students.index', $affiliation) }}" class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline">
+                                        Ver todos os documentos
+                                        <x-heroicon-o-arrow-right class="size-4" />
+                                    </a>
+
+                                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                                        @forelse ($summary['categorySummaries'] as $categorySummary)
+                                            <a
+                                                href="{{ route('submissions.students.index', [$affiliation, 'acc_category_id' => $categorySummary['category']->getKey()]) }}"
+                                                class="group rounded-lg border border-neutral-200 p-3 transition-colors hover:border-accent hover:bg-accent/5"
+                                            >
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-sm font-semibold text-neutral-900 group-hover:text-accent">{{ $categorySummary['category']->name }}</p>
+                                                        <p class="mt-1 text-xs text-neutral-500">{{ $categorySummary['accepted_documents_count'] }} {{ $categorySummary['accepted_documents_count'] === 1 ? 'documento aceito' : 'documentos aceitos' }}</p>
+                                                    </div>
+                                                    <x-heroicon-o-chevron-right class="size-4 shrink-0 text-neutral-400 group-hover:text-accent" />
+                                                </div>
+                                                <p class="mt-3 text-sm font-medium text-neutral-800">{{ number_format($categorySummary['recognized_hours'], 2, ',', '.') }} h <span class="font-normal text-neutral-500">de {{ number_format((float) $categorySummary['category']->max_hours, 2, ',', '.') }} h na categoria</span></p>
+                                                @if ($categorySummary['recognized_area_hours'] > 0)
+                                                    <p class="mt-1 text-xs text-neutral-500">{{ number_format($categorySummary['recognized_area_hours'], 2, ',', '.') }} h na área</p>
+                                                @endif
+                                            </a>
+                                        @empty
+                                            <p class="text-sm text-neutral-500">Nenhuma categoria cadastrada para este curso.</p>
+                                        @endforelse
+                                    </div>
+                                </section>
+                            @endif
                         </div>
 
                         @can('deactivate', $affiliation)
@@ -149,6 +217,5 @@
             </x-card>
         </div>
 
-        <x-metadata-card :model="$user" />
     </div>
 </x-layouts.app>

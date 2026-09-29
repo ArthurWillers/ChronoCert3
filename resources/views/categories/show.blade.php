@@ -23,21 +23,8 @@
                     <p class="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-600">{{ $category->description }}</p>
                 @endif
                 <dl class="mt-5 space-y-4 text-sm">
-                    <div class="flex justify-between gap-4"><dt class="text-neutral-500">Máximo de horas aproveitáveis</dt><dd class="font-semibold">{{ number_format((float) $category->max_hours, 2, ',', '.') }} h</dd></div>
+                    <div class="flex justify-between gap-4"><dt class="text-neutral-500">Limite de horas da categoria</dt><dd class="font-semibold">{{ number_format((float) $category->max_hours, 2, ',', '.') }} h</dd></div>
                 </dl>
-            </x-card>
-            <x-card>
-                <h2 class="text-base font-semibold text-neutral-900">Documentos</h2>
-                <p class="mt-3 text-sm leading-6 text-neutral-600">Documentos são opcionais. É permitido anexar múltiplos arquivos, com até 10 MB por arquivo.</p>
-                <div class="mt-3 flex flex-wrap gap-2">
-                    @foreach (collect(config('acc.documents.accepted_file_types', []))->pluck('label') as $format)
-                        <x-badge color="neutral">{{ $format }}</x-badge>
-                    @endforeach
-                </div>
-            </x-card>
-            <x-card>
-                <h2 class="text-base font-semibold text-neutral-900">Orientação ao discente</h2>
-                <p class="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-600">{{ $category->guidance ?: 'Nenhuma orientação adicional cadastrada.' }}</p>
             </x-card>
         </div>
         <div class="space-y-6">

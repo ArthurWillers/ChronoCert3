@@ -11,7 +11,7 @@ class AccSubmissionApprovedNotification extends Notification implements ShouldQu
 {
     use Queueable;
 
-    public function __construct(public int $submissionId, public string $approvedHours) {}
+    public function __construct(public int $submissionId) {}
 
     /** @return array<int, string> */
     public function via(object $notifiable): array
@@ -22,11 +22,11 @@ class AccSubmissionApprovedNotification extends Notification implements ShouldQu
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Comprovante de ACC aprovado')
+            ->subject('Documento de ACC aprovado')
             ->greeting('Olá!')
-            ->line("O comprovante #{$this->submissionId} foi aprovado.")
-            ->line("Horas contabilizadas: {$this->approvedHours}.")
-            ->action('Consultar comprovante', route('submissions.show', $this->submissionId))
+            ->line("O documento #{$this->submissionId} foi aceito.")
+            ->line('A carga horária declarada ficará disponível no resumo da categoria.')
+            ->action('Consultar documento', route('submissions.show', $this->submissionId))
             ->line('Consulte o extrato de ACC para acompanhar sua carga horária.');
     }
 }

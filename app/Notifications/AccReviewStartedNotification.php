@@ -22,10 +22,10 @@ class AccReviewStartedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Análise de comprovante iniciada')
+            ->subject('Análise de documento iniciada')
             ->greeting('Olá!')
-            ->line("A análise acadêmica do comprovante #{$this->submissionId} foi iniciada pela coordenação.")
-            ->action('Consultar comprovante', route('submissions.show', $this->submissionId))
+            ->line("A análise acadêmica do documento #{$this->submissionId} foi iniciada pela coordenação.")
+            ->action('Consultar documento', route('submissions.show', $this->submissionId))
             ->line('Você receberá uma nova mensagem quando houver uma decisão.');
     }
 }

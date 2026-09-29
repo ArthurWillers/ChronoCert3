@@ -37,7 +37,7 @@
 >
 
     <template x-teleport="body">
-        <div class="t-modal-scroll fixed inset-0 z-50 w-screen overflow-y-auto"
+        <div class="t-modal-scroll fixed inset-0 z-50 overflow-y-auto"
              style="display: none;"
              aria-labelledby="modal-title" 
              role="dialog" 

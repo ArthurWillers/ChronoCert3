@@ -35,7 +35,7 @@ class StartAccReview
 
             if ($submission->status !== SubmissionStatus::Submitted || $submission->review()->exists()) {
                 throw ValidationException::withMessages([
-                    'submission' => 'Este comprovante já teve a análise iniciada.',
+                    'submission' => 'Este documento já teve a análise iniciada.',
                 ]);
             }
 

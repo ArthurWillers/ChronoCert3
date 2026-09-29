@@ -39,16 +39,17 @@ class AccCategoryController extends Controller
         $categories = AccCategory::query()->visibleTo($affiliation)->with('course')
             ->when($course, fn (Builder $query): Builder => $query->whereBelongsTo($course))
             ->when($request->filled('search'), function (Builder $query) use ($request): void {
-                $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($request->validated('search'))).'%';
-                $query->where('name', 'ilike', $term);
+                $term = '%'.trim($request->validated('search')).'%';
+                $query->whereLike('name', $term);
             })
             ->when($request->input('status') === 'active', fn (Builder $query): Builder => $query->active())
             ->when($request->input('status') === 'inactive', fn (Builder $query): Builder => $query->whereNotNull('deactivated_at'))
             ->orderByRaw('deactivated_at IS NULL DESC')->orderBy('name')->orderBy('id')
             ->paginate(20)->withQueryString();
         $canCreate = $request->user()->can('create', [AccCategory::class, $course]);
+        $canManageCategories = $request->user()->can('manageAny', AccCategory::class);
 
-        return view('categories.index', compact('categories', 'course', 'canCreate'));
+        return view('categories.index', compact('categories', 'course', 'canCreate', 'canManageCategories'));
     }
 
     public function create(IndexAccCategoryRequest $request): View

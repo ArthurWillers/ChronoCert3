@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 
 uses(LazilyRefreshDatabase::class);
 
-test('a coordinator can open the category creation form with the configured document types', function () {
+test('a coordinator can open the category creation form with only academic rules', function () {
     $coordinatorAffiliation = Affiliation::factory()->coordinator()->create();
     $coordinatorAffiliation->load('user');
 
@@ -16,10 +16,12 @@ test('a coordinator can open the category creation form with the configured docu
 
     $response
         ->assertOk()
-        ->assertSeeText('Aceitos: PDF, JPEG, PNG, WebP.');
+        ->assertSeeText('Regras acadêmicas')
+        ->assertSeeText('Limite de horas da categoria')
+        ->assertDontSeeText('Orientação ao discente');
 });
 
-test('a coordinator can open a category with the configured document types', function () {
+test('a coordinator can view category academic rules without student guidance', function () {
     $coordinatorAffiliation = Affiliation::factory()->coordinator()->create();
     $category = AccCategory::factory()->create([
         'course_id' => $coordinatorAffiliation->course_id,
@@ -31,8 +33,7 @@ test('a coordinator can open a category with the configured document types', fun
         ->withSession(['active_affiliation_id' => $coordinatorAffiliation->getKey()])
         ->get(route('categories.show', $category))
         ->assertOk()
-        ->assertSeeText('PDF')
-        ->assertSeeText('JPEG')
-        ->assertSeeText('PNG')
-        ->assertSeeText('WebP');
+        ->assertSeeText('Regras acadêmicas')
+        ->assertSeeText('Limite de horas da categoria')
+        ->assertDontSeeText('Orientação ao discente');
 });

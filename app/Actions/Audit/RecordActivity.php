@@ -165,7 +165,8 @@ class RecordActivity
                 'reviewer_affiliation_id' => $model->reviewer_affiliation_id,
                 'acc_category_id' => $model->acc_category_id,
                 'normalized_title' => $model->normalized_title,
-                'approved_hours' => $model->approved_hours,
+                'certificate_hours' => $model->certificate_hours,
+                'is_area_related' => $model->is_area_related,
                 'started_at' => $model->started_at?->toIso8601String(),
                 'completed_at' => $model->completed_at?->toIso8601String(),
             ], static fn (mixed $value): bool => $value !== null);

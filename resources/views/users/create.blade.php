@@ -19,7 +19,19 @@
                 <div class="sm:col-span-2">
                     <x-form-input name="name" label="Nome completo" required autofocus autocomplete="name" />
                 </div>
-                <x-form-input name="cpf" label="CPF" required inputmode="numeric" maxlength="14" autocomplete="off" />
+                <div>
+                    <x-form-input
+                        name="cpf"
+                        label="CPF"
+                        required
+                        inputmode="numeric"
+                        maxlength="14"
+                        autocomplete="off"
+                        help="Se este CPF já tiver uma conta, você seguirá direto para o novo vínculo."
+                        data-existing-user-lookup="{{ route('users.lookup') }}"
+                    />
+                    <p data-existing-user-feedback class="mt-2 hidden text-sm text-accent" aria-live="polite"></p>
+                </div>
                 <x-form-input name="email" type="email" label="E-mail de login" required autocomplete="email" />
             </div>
         </x-card>

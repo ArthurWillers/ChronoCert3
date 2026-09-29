@@ -21,6 +21,7 @@ test('academic notifications use the student affiliation operational email', fun
         AccReviewStartedNotification::class,
         fn (AccReviewStartedNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === $student->email,
     );
+    Notification::assertSentOnDemandTimes(AccReviewStartedNotification::class, 1);
 
     reviewActingAs($this, $coordinator)->post(route('reviews.approve', $review))->assertSessionHasNoErrors();
 
@@ -29,6 +30,7 @@ test('academic notifications use the student affiliation operational email', fun
         fn (AccSubmissionApprovedNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === $student->email
             && $notification->submissionId === $submission->getKey(),
     );
+    Notification::assertSentOnDemandTimes(AccSubmissionApprovedNotification::class, 1);
 });
 
 test('the rejection notification includes the reason without a private file URL', function () {

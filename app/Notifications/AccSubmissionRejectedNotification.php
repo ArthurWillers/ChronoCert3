@@ -22,11 +22,11 @@ class AccSubmissionRejectedNotification extends Notification implements ShouldQu
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Comprovante de ACC rejeitado')
+            ->subject('Documento de ACC rejeitado')
             ->greeting('Olá!')
-            ->line("O comprovante #{$this->submissionId} foi rejeitado.")
+            ->line("O documento #{$this->submissionId} foi rejeitado.")
             ->line("Motivo: {$this->rejectionReason}")
-            ->action('Consultar comprovante', route('submissions.show', $this->submissionId))
-            ->line('Se necessário, envie um novo comprovante como uma nova submissão.');
+            ->action('Consultar documento', route('submissions.show', $this->submissionId))
+            ->line('Se necessário, envie um novo documento como uma nova submissão.');
     }
 }

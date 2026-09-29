@@ -35,7 +35,7 @@ class StoreAccCategoryRequest extends FormRequest
             'document_required' => ['prohibited'],
             'allowed_mime_types' => ['prohibited'],
             'max_file_size_bytes' => ['prohibited'],
-            'guidance' => ['nullable', 'string'],
+            'guidance' => ['prohibited'],
         ];
     }
 
@@ -60,7 +60,7 @@ class StoreAccCategoryRequest extends FormRequest
             'course_id' => 'curso', 'name' => 'nome', 'description' => 'descrição',
             'max_hours' => 'limite de horas', 'accepts_multiple' => 'múltiplas submissões',
             'document_required' => 'exigência de documento', 'allowed_mime_types' => 'formatos aceitos',
-            'allowed_mime_types.*' => 'tipo MIME', 'max_file_size_bytes' => 'tamanho máximo em bytes', 'guidance' => 'orientação',
+            'allowed_mime_types.*' => 'tipo MIME', 'max_file_size_bytes' => 'tamanho máximo em bytes',
         ];
     }
 

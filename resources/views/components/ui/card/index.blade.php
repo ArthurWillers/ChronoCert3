@@ -8,15 +8,15 @@
     $tag = $href ? 'a' : $tag;
     $isInteractive = (bool) $href;
 
-    $baseClasses = 'bg-white dark:bg-white/10 border border-accent/30 dark:border-accent/20 shadow-sm transition-all duration-200';
+    $baseClasses = 'border border-neutral-200 bg-white shadow-sm transition-colors duration-150';
     
     $sizeClasses = match ($size) {
-        'sm' => 'p-3 sm:p-4 rounded-lg',
-        default => 'p-4 sm:p-6 rounded-xl',
+        'sm' => 'rounded-lg p-3 sm:p-4',
+        default => 'rounded-lg p-4 sm:p-5',
     };
 
-    $interactiveClasses = $isInteractive 
-        ? 'hover:border-accent hover:shadow hover:-translate-y-0.5' 
+    $interactiveClasses = $isInteractive
+        ? 'hover:border-neutral-300 hover:shadow'
         : '';
 
     $classes = trim("$baseClasses $sizeClasses $interactiveClasses");

@@ -55,14 +55,16 @@
 
 @media (min-width: 640px) {
     .t-acc-panel--desktop-open {
-        display: contents;
+        display: block;
+        flex: 1 1 0%;
+        min-width: 0;
     }
 
     .t-acc-panel--desktop-open .t-acc-panel-inner {
+        width: 100%;
         overflow: visible;
         opacity: 1;
         filter: none;
     }
 
 }
-

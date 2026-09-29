@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
 
-#[Fillable(['name', 'description', 'max_hours', 'guidance'])]
+#[Fillable(['name', 'description', 'max_hours'])]
 class AccCategory extends Model
 {
     /** @use HasFactory<AccCategoryFactory> */

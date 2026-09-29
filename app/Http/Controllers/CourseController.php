@@ -38,9 +38,9 @@ class CourseController extends Controller
             ->when(
                 $request->filled('search'),
                 function (Builder $query) use ($request): void {
-                    $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], trim((string) $request->input('search'))).'%';
+                    $term = '%'.trim((string) $request->input('search')).'%';
 
-                    $query->where('name', 'ilike', $term);
+                    $query->whereLike('name', $term);
                 },
             )
             ->when($request->input('status') === 'active', fn (Builder $query): Builder => $query->active())

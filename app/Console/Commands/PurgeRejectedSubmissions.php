@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('acc:purge-rejected-submissions')]
-#[Description('Remove comprovantes rejeitados cujo prazo de retenção terminou.')]
+#[Description('Remove documentos rejeitados cujo prazo de retenção terminou.')]
 class PurgeRejectedSubmissions extends Command
 {
     public function __construct(private PurgeRejectedSubmission $purgeRejectedSubmission)
@@ -33,7 +33,7 @@ class PurgeRejectedSubmissions extends Command
                 }
             }, 100);
 
-        $this->info("{$purgedCount} comprovante(s) expurgado(s).");
+        $this->info("{$purgedCount} documento(s) expurgado(s).");
 
         return self::SUCCESS;
     }

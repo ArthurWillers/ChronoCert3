@@ -4,16 +4,16 @@ namespace App\Actions\Statements;
 
 use App\Enums\AffiliationType;
 use App\Enums\SubmissionStatus;
-use App\Models\AccCategory;
 use App\Models\AccReview;
 use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class BuildAccStatement
 {
+    public function __construct(private BuildStudentAccSummary $buildStudentAccSummary) {}
+
     /** @return array<string, mixed> */
     public function execute(Affiliation $affiliation): array
     {
@@ -36,17 +36,13 @@ class BuildAccStatement
             ->with(['review.category', 'media'])
             ->latest('submitted_at')
             ->get();
-        $approvedReviews = $history
-            ->where('status', SubmissionStatus::Approved)
-            ->pluck('review')
-            ->filter(fn (mixed $review): bool => $review instanceof AccReview);
+        $summary = $this->buildStudentAccSummary->execute($studentAffiliation);
 
         return [
             'mode' => 'student',
             'affiliation' => $studentAffiliation->loadMissing(['user', 'course']),
             'history' => $history,
-            'categorySummaries' => $this->categorySummaries($studentAffiliation, $approvedReviews),
-            'totalApprovedHours' => $approvedReviews->sum(fn (AccReview $review): float => (float) $review->approved_hours),
+            ...$summary,
         ];
     }
 
@@ -61,47 +57,32 @@ class BuildAccStatement
                 'user:id,name',
                 'submissionsAsStudent' => fn (HasMany $query): HasMany => $query
                     ->where('status', SubmissionStatus::Approved)
-                    ->with('review'),
+                    ->with('review.category'),
             ])
             ->orderBy('registration_number')
             ->get()
             ->map(function (Affiliation $student): array {
-                $approvedHours = $student->submissionsAsStudent
+                $certificateHours = $student->submissionsAsStudent
                     ->pluck('review')
                     ->filter(fn (mixed $review): bool => $review instanceof AccReview)
-                    ->sum(fn (AccReview $review): float => (float) $review->approved_hours);
+                    ->groupBy('acc_category_id')
+                    ->sum(function ($reviews): float {
+                        $category = $reviews->first()?->category;
 
-                return ['affiliation' => $student, 'approved_hours' => $approvedHours];
+                        return min(
+                            (float) $reviews->sum(fn (AccReview $review): float => (float) $review->certificate_hours),
+                            (float) $category?->max_hours,
+                        );
+                    });
+
+                return ['affiliation' => $student, 'certificate_hours' => $certificateHours];
             });
 
         return [
             'mode' => 'coordinator',
             'affiliation' => $coordinatorAffiliation->loadMissing('course'),
             'students' => $students,
-            'totalApprovedHours' => $students->sum('approved_hours'),
+            'totalCertificateHours' => $students->sum('certificate_hours'),
         ];
-    }
-
-    /**
-     * @param  Collection<int, AccReview>  $approvedReviews
-     * @return Collection<int, array<string, mixed>>
-     */
-    private function categorySummaries(Affiliation $studentAffiliation, Collection $approvedReviews): Collection
-    {
-        return AccCategory::query()
-            ->where('course_id', $studentAffiliation->course_id)
-            ->orderBy('name')
-            ->get()
-            ->map(function (AccCategory $category) use ($approvedReviews): array {
-                $approvedHours = $approvedReviews
-                    ->where('acc_category_id', $category->getKey())
-                    ->sum(fn (AccReview $review): float => (float) $review->approved_hours);
-
-                return [
-                    'category' => $category,
-                    'approved_hours' => $approvedHours,
-                    'available_hours' => max(0, (float) $category->max_hours - $approvedHours),
-                ];
-            });
     }
 }

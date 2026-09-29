@@ -2,6 +2,8 @@
 
 use App\Enums\SubmissionOrigin;
 use App\Enums\SubmissionStatus;
+use App\Models\AccCategory;
+use App\Models\AccReview;
 use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\AuditActivity;
@@ -23,7 +25,7 @@ test('a student can open the proof submission form', function () {
     actingAsAffiliation($this, $studentAffiliation)
         ->get(route('submissions.create'))
         ->assertOk()
-        ->assertSeeText('Enviar comprovante de ACC');
+        ->assertSeeText('Enviar documento de ACC');
 });
 
 test('a student submits a proof for the active student affiliation', function () {
@@ -58,7 +60,8 @@ test('a coordinator registers a proof for an active student in the same course',
         ->student_affiliation_id->toBe($studentAffiliation->getKey())
         ->submitted_by_affiliation_id->toBe($coordinatorAffiliation->getKey())
         ->origin->toBe(SubmissionOrigin::Coordinator)
-        ->status->toBe(SubmissionStatus::Submitted);
+        ->status->toBe(SubmissionStatus::UnderReview)
+        ->review->toBeInstanceOf(AccReview::class);
 });
 
 test('a coordinator cannot register a proof for a student from another course', function () {
@@ -70,6 +73,163 @@ test('a coordinator cannot register a proof for a student from another course', 
         ->assertForbidden();
 
     expect(AccSubmission::query()->count())->toBe(0);
+});
+
+test('a coordinator filters documents by student and category in the active course', function () {
+    $course = Course::factory()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($course)->create();
+    $student = Affiliation::factory()->student()->for($course)->create();
+    $otherStudent = Affiliation::factory()->student()->for($course)->create();
+    $category = AccCategory::factory()->for($course)->create(['name' => 'Eventos']);
+    $otherCategory = AccCategory::factory()->for($course)->create(['name' => 'Pesquisa']);
+    $matchingSubmission = AccSubmission::factory()->create([
+        'student_affiliation_id' => $student->getKey(),
+        'submitted_by_affiliation_id' => $student->getKey(),
+        'status' => SubmissionStatus::Approved,
+    ]);
+    $otherSubmission = AccSubmission::factory()->create([
+        'student_affiliation_id' => $otherStudent->getKey(),
+        'submitted_by_affiliation_id' => $otherStudent->getKey(),
+        'status' => SubmissionStatus::Approved,
+    ]);
+
+    AccReview::factory()->create([
+        'acc_submission_id' => $matchingSubmission->getKey(),
+        'reviewer_affiliation_id' => $coordinator->getKey(),
+        'acc_category_id' => $category->getKey(),
+        'normalized_title' => 'Documento de eventos',
+        'certificate_hours' => 8,
+        'completed_at' => now(),
+    ]);
+    AccReview::factory()->create([
+        'acc_submission_id' => $otherSubmission->getKey(),
+        'reviewer_affiliation_id' => $coordinator->getKey(),
+        'acc_category_id' => $otherCategory->getKey(),
+        'normalized_title' => 'Documento de pesquisa',
+        'certificate_hours' => 6,
+        'completed_at' => now(),
+    ]);
+
+    actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.students.index', [$student, 'acc_category_id' => $category->getKey()]))
+        ->assertOk()
+        ->assertSeeText('Documento de eventos')
+        ->assertDontSeeText('Documento de pesquisa');
+});
+
+test('a coordinator cannot open a course-wide document list or another courses student list', function () {
+    $course = Course::factory()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($course)->create();
+    $student = Affiliation::factory()->student()->for($course)->create();
+    $otherStudent = Affiliation::factory()->student()->create();
+
+    actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.index'))
+        ->assertForbidden();
+    actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.download-all'))
+        ->assertForbidden();
+    actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.students.index', $otherStudent))
+        ->assertForbidden();
+    actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.students.download-all', $otherStudent))
+        ->assertForbidden();
+    actingAsAffiliation($this, $student)
+        ->get(route('submissions.students.index', $student))
+        ->assertForbidden();
+    actingAsAffiliation($this, $student)
+        ->get(route('submissions.students.download-all', $student))
+        ->assertForbidden();
+});
+
+test('an administrator and an inactive affiliation cannot download a student archive', function () {
+    $course = Course::factory()->create();
+    $student = Affiliation::factory()->student()->for($course)->create();
+    $administrator = Affiliation::factory()->administrator()->create();
+    $inactiveCoordinator = Affiliation::factory()->coordinator()->inactive()->for($course)->create();
+
+    actingAsAffiliation($this, $administrator)
+        ->get(route('submissions.students.download-all', $student))
+        ->assertForbidden();
+    actingAsAffiliation($this, $inactiveCoordinator)
+        ->get(route('submissions.students.download-all', $student))
+        ->assertForbidden();
+});
+
+test('a student archive contains only their own files', function () {
+    $course = Course::factory()->create();
+    $student = Affiliation::factory()->student()->for($course)->create();
+    $otherStudent = Affiliation::factory()->student()->for($course)->create();
+    $ownSubmission = submitProof($this, $student);
+    $otherSubmission = submitProof($this, $otherStudent);
+
+    $response = actingAsAffiliation($this, $student)
+        ->get(route('submissions.download-all'))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/zip');
+
+    $archive = $response->streamedContent();
+    expect($archive)->toContain('documento-'.$ownSubmission->getKey().'/comprovante.pdf')
+        ->not->toContain('documento-'.$otherSubmission->getKey().'/comprovante.pdf');
+    expect(AuditActivity::query()->where('event', 'submission.exported')->count())->toBe(1);
+});
+
+test('a coordinator archive uses the selected student and category filter', function () {
+    $course = Course::factory()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($course)->create();
+    $student = Affiliation::factory()->student()->for($course)->create();
+    $otherStudent = Affiliation::factory()->student()->for($course)->create();
+    $category = AccCategory::factory()->for($course)->create();
+    $included = submitProof($this, $student);
+    $excluded = submitProof($this, $student);
+    $other = submitProof($this, $otherStudent);
+
+    AccReview::factory()->create([
+        'acc_submission_id' => $included->getKey(),
+        'reviewer_affiliation_id' => $coordinator->getKey(),
+        'acc_category_id' => $category->getKey(),
+    ]);
+
+    $response = actingAsAffiliation($this, $coordinator)
+        ->get(route('submissions.students.download-all', [$student, 'acc_category_id' => $category->getKey()]))
+        ->assertOk();
+
+    $archive = $response->streamedContent();
+    expect($archive)->toContain('documento-'.$included->getKey().'/comprovante.pdf')
+        ->not->toContain('documento-'.$excluded->getKey().'/comprovante.pdf')
+        ->not->toContain('documento-'.$other->getKey().'/comprovante.pdf');
+});
+
+test('an archive without matching files returns not found', function () {
+    $student = Affiliation::factory()->student()->create();
+
+    actingAsAffiliation($this, $student)
+        ->get(route('submissions.download-all'))
+        ->assertNotFound();
+});
+
+test('an image proof opens in a protected lightbox while pdfs remain inline', function () {
+    $student = Affiliation::factory()->student()->create();
+    $image = UploadedFile::fake()->createWithContent(
+        'imagem.png',
+        base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', true),
+    );
+
+    actingAsAffiliation($this, $student)
+        ->post(route('submissions.store'), ['document' => $image])
+        ->assertRedirect();
+
+    $submission = AccSubmission::query()->latest('id')->firstOrFail();
+
+    actingAsAffiliation($this, $student)
+        ->get(route('submissions.show', $submission))
+        ->assertOk()
+        ->assertSeeText('Visualizar imagem')
+        ->assertSee('openLightbox(', false);
+    actingAsAffiliation($this, $student)
+        ->get(route('submissions.document', $submission))
+        ->assertOk();
 });
 
 test('an inactive affiliation cannot submit a proof', function () {
@@ -184,7 +344,9 @@ test('submission activities identify the author affiliation, beneficiary, course
     actingAsAffiliation($this, $coordinatorAffiliation)
         ->post(route('submissions.students.store', $studentAffiliation), ['document' => validPdf()]);
 
-    $activity = AuditActivity::query()->sole();
+    $activity = AuditActivity::query()
+        ->where('event', 'submission.uploaded_by_coordinator')
+        ->sole();
     $properties = $activity->properties->all();
 
     $studentAffiliation->load('user');

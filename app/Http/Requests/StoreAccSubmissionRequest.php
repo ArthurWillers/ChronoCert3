@@ -58,7 +58,7 @@ class StoreAccSubmissionRequest extends FormRequest
             }
 
             if ((int) $document->getSize() === 0) {
-                $validator->errors()->add('document', 'O comprovante não pode estar vazio.');
+                $validator->errors()->add('document', 'O documento não pode estar vazio.');
 
                 return;
             }
@@ -70,7 +70,7 @@ class StoreAccSubmissionRequest extends FormRequest
             $extension = $document->getClientOriginalExtension();
 
             if (! is_string($mimeType) || ! AccSubmission::acceptsFile($mimeType, $extension)) {
-                $validator->errors()->add('document', 'O comprovante deve ter um formato e uma extensão aceitos.');
+                $validator->errors()->add('document', 'O documento deve ter um formato e uma extensão aceitos.');
             }
 
             $extensions = array_slice(explode('.', Str::lower($document->getClientOriginalName())), 1);
@@ -79,7 +79,7 @@ class StoreAccSubmissionRequest extends FormRequest
                 ->all();
 
             if (array_intersect($extensions, $disallowedExtensions) !== []) {
-                $validator->errors()->add('document', 'O nome do comprovante contém uma extensão não permitida.');
+                $validator->errors()->add('document', 'O nome do documento contém uma extensão não permitida.');
             }
         }];
     }
@@ -89,6 +89,6 @@ class StoreAccSubmissionRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return ['document' => 'comprovante'];
+        return ['document' => 'documento'];
     }
 }

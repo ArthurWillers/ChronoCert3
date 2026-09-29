@@ -9,10 +9,10 @@
 <x-layouts.app>
     <div class="mx-auto max-w-3xl space-y-6">
         <x-page-header
-            :title="$isCoordinatorSubmission ? 'Registrar comprovante para discente' : 'Enviar comprovante de ACC'"
+            :title="$isCoordinatorSubmission ? 'Registrar documento para discente' : 'Enviar documento de ACC'"
             :description="$isCoordinatorSubmission
-                ? 'O arquivo será atribuído ao discente e identificado como um envio da coordenação.'
-                : 'O envio cria um comprovante em análise. Não há rascunho ou reenvio neste registro.'"
+                ? 'Ao registrar, o documento abrirá diretamente na etapa de revisão acadêmica.'
+                : 'O envio cria um documento em análise. Não há rascunho ou reenvio neste registro.'"
         />
 
         <x-card>
@@ -27,7 +27,7 @@
                 <x-dropzone
                     name="document"
                     :accept="$accept"
-                    label="Selecione o comprovante"
+                    label="Selecione o documento"
                     sublabel="PDF, JPEG, PNG ou WebP, com até 10 MB"
                     required
                 />
@@ -37,7 +37,11 @@
                 </x-callout>
 
                 <div class="flex justify-end gap-3">
-                    <x-form-actions form="submission-form" :fallback="route('submissions.index')" :submit-text="$isCoordinatorSubmission ? 'Registrar comprovante' : 'Enviar comprovante'" />
+                    <x-form-actions
+                        form="submission-form"
+                        :fallback="$isCoordinatorSubmission ? route('users.show', $studentAffiliation->user) : route('submissions.index')"
+                        :submit-text="$isCoordinatorSubmission ? 'Registrar documento' : 'Enviar documento'"
+                    />
                 </div>
             </form>
         </x-card>

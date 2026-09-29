@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Affiliations\ActiveAffiliationContext;
 use App\Actions\Audit\RecordActivity;
+use App\Actions\Reviews\StartAccReview;
 use App\Actions\Submissions\CreateSubmission;
 use App\Enums\AffiliationType;
 use App\Enums\AuditEvent;
@@ -19,14 +20,18 @@ use App\Models\Course;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use ZipStream\ZipStream;
 
 class AccSubmissionController extends Controller
 {
     public function __construct(
         private ActiveAffiliationContext $activeAffiliationContext,
         private CreateSubmission $createSubmission,
+        private StartAccReview $startAccReview,
         private RecordActivity $recordActivity,
     ) {}
 
@@ -36,35 +41,124 @@ class AccSubmissionController extends Controller
     public function index(IndexAccSubmissionRequest $request): View
     {
         $affiliation = $this->activeAffiliation($request);
-        $submissions = AccSubmission::query()
-            ->visibleTo($affiliation)
+        $this->authorize('viewOwnList', AccSubmission::class);
+
+        return $this->renderIndex($request, $affiliation, $affiliation);
+    }
+
+    public function indexFor(IndexAccSubmissionRequest $request, Affiliation $studentAffiliation): View
+    {
+        $this->authorize('viewForStudent', [AccSubmission::class, $studentAffiliation]);
+        $studentAffiliation->load(['user', 'course']);
+
+        return $this->renderIndex($request, $studentAffiliation, $this->activeAffiliation($request));
+    }
+
+    public function downloadAll(IndexAccSubmissionRequest $request): StreamedResponse
+    {
+        $this->authorize('viewOwnList', AccSubmission::class);
+        $affiliation = $this->activeAffiliation($request);
+
+        return $this->archive($request, $affiliation);
+    }
+
+    public function downloadAllFor(IndexAccSubmissionRequest $request, Affiliation $studentAffiliation): StreamedResponse
+    {
+        $this->authorize('viewForStudent', [AccSubmission::class, $studentAffiliation]);
+
+        return $this->archive($request, $studentAffiliation);
+    }
+
+    private function renderIndex(IndexAccSubmissionRequest $request, Affiliation $studentAffiliation, Affiliation $activeAffiliation): View
+    {
+        $submissions = $this->studentSubmissions($studentAffiliation, $request->validated())
             ->with([
-                'studentAffiliation.user:id,name',
                 'submittedByAffiliation.user:id,name',
+                'review.category',
                 'media',
             ])
-            ->when(
-                $request->filled('status'),
-                fn (Builder $query): Builder => $query->where('status', $request->validated('status')),
-            )
             ->latest('submitted_at')
             ->latest('id')
             ->paginate(20)
             ->withQueryString();
-        $canCreateOwn = $request->user()->can('create', AccSubmission::class);
-        $canRegisterForStudents = $affiliation->type === AffiliationType::Coordinator
-            && Course::query()->active()->whereKey($affiliation->course_id)->exists();
-        $students = $canRegisterForStudents
-            ? Affiliation::query()
-                ->active()
-                ->where('type', AffiliationType::Student)
-                ->where('course_id', $affiliation->course_id)
-                ->with('user:id,name')
-                ->orderBy('registration_number')
-                ->get()
-            : collect();
+        $categories = AccCategory::query()
+            ->where('course_id', $studentAffiliation->course_id)
+            ->orderBy('name')
+            ->get();
+        $archiveHasFiles = $this->studentSubmissions($studentAffiliation, $request->validated())
+            ->whereHas('media', fn (Builder $media): Builder => $media->where('collection_name', AccSubmission::EvidenceCollection))
+            ->exists();
+        $isCoordinator = $activeAffiliation->type === AffiliationType::Coordinator;
+        $canCreateOwn = ! $isCoordinator && $request->user()->can('create', AccSubmission::class);
+        $canCreateFor = $isCoordinator && $request->user()->can('createFor', [AccSubmission::class, $studentAffiliation]);
 
-        return view('submissions.index', compact('submissions', 'affiliation', 'canCreateOwn', 'canRegisterForStudents', 'students'));
+        return view('submissions.index', compact('submissions', 'studentAffiliation', 'categories', 'isCoordinator', 'canCreateOwn', 'canCreateFor', 'archiveHasFiles'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return Builder<AccSubmission>
+     */
+    private function studentSubmissions(Affiliation $studentAffiliation, array $filters): Builder
+    {
+        return AccSubmission::query()
+            ->where('student_affiliation_id', $studentAffiliation->getKey())
+            ->when(
+                $filters['status'] ?? null,
+                fn (Builder $query, string $status): Builder => $query->where('status', $status),
+            )
+            ->when(
+                $filters['acc_category_id'] ?? null,
+                fn (Builder $query, int $categoryId): Builder => $query
+                    ->whereHas('review', fn (Builder $review): Builder => $review->where('acc_category_id', $categoryId)),
+            );
+    }
+
+    private function archive(IndexAccSubmissionRequest $request, Affiliation $studentAffiliation): StreamedResponse
+    {
+        $submissions = $this->studentSubmissions($studentAffiliation, $request->validated())
+            ->with(['media', 'studentAffiliation.course', 'submittedByAffiliation'])
+            ->orderBy('id')
+            ->get();
+        $documents = $submissions
+            ->map(fn (AccSubmission $submission): array => [
+                'submission' => $submission,
+                'media' => $submission->getFirstMedia(AccSubmission::EvidenceCollection),
+            ])
+            ->filter(fn (array $document): bool => $document['media'] instanceof Media)
+            ->values();
+
+        abort_if($documents->isEmpty(), 404);
+
+        foreach ($documents as $document) {
+            $this->recordDocumentAccess($document['submission'], $request, AuditEvent::SubmissionExported);
+        }
+
+        $filename = 'comprovantes-matricula-'.Str::slug($studentAffiliation->registration_number ?: (string) $studentAffiliation->getKey()).'.zip';
+
+        return response()->streamDownload(function () use ($documents, $filename): void {
+            $zip = new ZipStream(outputName: $filename, sendHttpHeaders: false);
+
+            foreach ($documents as $document) {
+                $media = $document['media'];
+                $originalName = basename(str_replace('\\', '/', (string) $media->getCustomProperty('original_filename', $media->file_name)));
+                $safeName = preg_replace('/[\x00-\x1f\x7f]/', '', $originalName) ?: $media->file_name;
+                $stream = $media->stream();
+
+                try {
+                    $zip->addFileFromStream('documento-'.$document['submission']->getKey().'/'.$safeName, $stream);
+                } finally {
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
+                }
+            }
+
+            $zip->finish();
+        }, $filename, [
+            'Content-Type' => 'application/zip',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**
@@ -97,7 +191,7 @@ class AccSubmissionController extends Controller
         );
 
         return redirect()->route('submissions.show', $submission)
-            ->with('success', 'Comprovante enviado para análise.');
+            ->with('success', 'Documento enviado para análise.');
     }
 
     /**
@@ -128,9 +222,14 @@ class AccSubmissionController extends Controller
             document: $request->file('document'),
             causer: $request->user(),
         );
+        $this->startAccReview->execute(
+            submission: $submission,
+            reviewerAffiliation: $this->activeAffiliation($request),
+            causer: $request->user(),
+        );
 
         return redirect()->route('submissions.show', $submission)
-            ->with('success', 'Comprovante registrado para o discente.');
+            ->with('success', 'Documento registrado e pronto para revisão.');
     }
 
     /**
@@ -154,12 +253,14 @@ class AccSubmissionController extends Controller
         $canStartReview = $request->user()->can('create', [AccReview::class, $submission]);
         $canUpdateReview = $submission->review !== null
             && $request->user()->can('update', $submission->review);
+        $isCoordinator = $affiliation->type === AffiliationType::Coordinator;
 
         return view('submissions.show', compact(
             'submission',
             'categories',
             'canStartReview',
             'canUpdateReview',
+            'isCoordinator',
         ));
     }
 

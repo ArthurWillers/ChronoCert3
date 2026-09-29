@@ -26,6 +26,28 @@ class AccSubmissionPolicy
             && in_array($affiliation->type, [AffiliationType::Student, AffiliationType::Coordinator], true);
     }
 
+    public function viewOwnList(User $user): bool
+    {
+        $affiliation = $this->activeAffiliationContext->for($user);
+
+        return $affiliation !== null
+            && $affiliation->isActive()
+            && $affiliation->type === AffiliationType::Student
+            && $affiliation->course_id !== null;
+    }
+
+    public function viewForStudent(User $user, Affiliation $studentAffiliation): bool
+    {
+        $affiliation = $this->activeAffiliationContext->for($user);
+
+        return $affiliation !== null
+            && $affiliation->isActive()
+            && $affiliation->type === AffiliationType::Coordinator
+            && $affiliation->course_id !== null
+            && $studentAffiliation->type === AffiliationType::Student
+            && (int) $affiliation->course_id === (int) $studentAffiliation->course_id;
+    }
+
     /**
      * Determine whether the user can view the model.
      */

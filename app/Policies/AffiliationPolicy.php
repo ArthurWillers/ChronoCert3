@@ -44,7 +44,8 @@ class AffiliationPolicy
     {
         if ($this->isGlobalAdministrator($user)) {
             return $affiliation->type === AffiliationType::Coordinator
-                || ($affiliation->type === AffiliationType::Administrator && $user->is($affiliation->user));
+                || ($affiliation->type === AffiliationType::Administrator
+                    && (int) $user->getKey() === (int) $affiliation->user_id);
         }
 
         if (! $this->isCoordinator($user)) {

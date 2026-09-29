@@ -12,10 +12,9 @@
     $bgClass = $colorClasses[$iconColor] ?? $colorClasses['neutral'];
 @endphp
 
-<div class="flex items-center gap-3 mb-6">
-    <div class="w-12 h-12 {{ $bgClass }} rounded-lg flex items-center justify-center">
-        <x-dynamic-component :component="$icon" class="w-6 h-6" />
+<div class="mb-4 flex items-center gap-2.5">
+    <div class="flex size-9 items-center justify-center rounded-lg {{ $bgClass }}">
+        <x-dynamic-component :component="$icon" class="size-5" />
     </div>
-    <h3 class="text-xl font-bold text-neutral-800">{{ $title }}</h3>
+    <h3 class="text-base font-semibold text-neutral-800">{{ $title }}</h3>
 </div>
-

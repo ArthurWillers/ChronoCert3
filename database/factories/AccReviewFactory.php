@@ -30,8 +30,8 @@ class AccReviewFactory extends Factory
             'acc_category_id' => null,
             'original_title' => fake()->sentence(3),
             'normalized_title' => null,
-            'original_hours' => null,
-            'approved_hours' => null,
+            'certificate_hours' => null,
+            'is_area_related' => false,
             'classification_justification' => null,
             'rejection_reason' => null,
             'category_snapshot' => null,
@@ -46,8 +46,7 @@ class AccReviewFactory extends Factory
         return $this->state(fn (): array => [
             'acc_category_id' => AccCategory::factory(),
             'normalized_title' => fake()->sentence(3),
-            'original_hours' => 10,
-            'approved_hours' => 10,
+            'certificate_hours' => 10,
         ]);
     }
 }

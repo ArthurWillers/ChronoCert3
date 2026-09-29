@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Dashboards\BuildDashboard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(private BuildDashboard $buildDashboard) {}
+
     /**
      * Render the dashboard that belongs to the selected affiliation type.
      */
@@ -29,8 +32,6 @@ class DashboardController extends Controller
             'administrator' => 'dashboards.administrator',
             'coordinator' => 'dashboards.coordinator',
             default => 'dashboards.student',
-        }, [
-            'affiliation' => $affiliation,
-        ]);
+        }, $this->buildDashboard->execute($affiliation));
     }
 }

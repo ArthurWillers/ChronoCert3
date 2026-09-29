@@ -1,17 +1,17 @@
 @props(['title' => null, 'description' => null, 'message' => null, 'icon' => null, 'actionText' => null, 'actionRoute' => null])
 
-<div class="py-12 px-4 text-center">
+<div class="px-4 py-10 text-center">
     @if ($icon)
-        <div class="flex justify-center mb-4">
-            <div class="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center">
-                <x-dynamic-component :component="$icon" class="w-8 h-8 text-neutral-400" />
+        <div class="mb-3 flex justify-center">
+            <div class="flex size-11 items-center justify-center rounded-full bg-neutral-100">
+                <x-dynamic-component :component="$icon" class="size-5 text-neutral-400" />
             </div>
         </div>
     @endif
 
     <div class="text-neutral-600">
         @if($title)
-            <h3 class="text-lg font-medium text-neutral-900">{{ $title }}</h3>
+            <h3 class="text-base font-semibold text-neutral-900">{{ $title }}</h3>
         @endif
         @if($description || $message)
             <p class="{{ $title ? 'mt-1 text-sm text-neutral-500' : 'font-medium text-base' }}">

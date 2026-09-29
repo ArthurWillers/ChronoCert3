@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Statements\BuildStudentAccSummary;
 use App\Enums\SubmissionStatus;
 use App\Models\AccCategory;
 use App\Models\AccReview;
@@ -65,9 +66,10 @@ test('a coordinator classifies a submission with corrected academic data', funct
 
     expect($review->refresh())
         ->normalized_title->toBe('Congresso de Tecnologia')
-        ->approved_hours->toBe('8.00')
+        ->certificate_hours->toBe('10.00')
+        ->is_area_related->toBeTrue()
         ->acc_category_id->toBe($category->getKey())
-        ->classification_justification->toBe('Título padronizado para o extrato.');
+        ->classification_justification->toBeNull();
     expect(AuditActivity::query()->where('event', 'submission.reclassified')->exists())->toBeTrue();
 });
 
@@ -85,7 +87,25 @@ test('a coordinator approves a classified submission and preserves the category 
         ->completed_at->not->toBeNull()
         ->category_snapshot->toBeArray()
         ->and(data_get($review->category_snapshot, 'name'))->toBe($category->name)
-        ->and(data_get($review->rules_snapshot, 'approved_hours'))->toBe('8.00');
+        ->and(data_get($review->rules_snapshot, 'certificate_hours'))->toBe('10.00');
+});
+
+test('a coordinator accepts a document and saves its classification in one submission', function () {
+    [$submission, $student, $coordinator, $category] = reviewScenario();
+    $review = startReview($this, $submission, $coordinator);
+
+    reviewActingAs($this, $coordinator)
+        ->post(route('reviews.complete', $review), [
+            ...validClassification($category),
+            'decision' => 'approve',
+        ])
+        ->assertRedirect(route('submissions.show', $submission))
+        ->assertSessionHasNoErrors();
+
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::Approved)
+        ->and($review->refresh())
+        ->normalized_title->toBe('Congresso de Tecnologia')
+        ->completed_at->not->toBeNull();
 });
 
 test('a rejection requires a reason and schedules purge for thirty days', function () {
@@ -130,19 +150,19 @@ test('an inactive category cannot be approved', function () {
     expect($submission->refresh()->status)->toBe(SubmissionStatus::UnderReview);
 });
 
-test('approved hours must be positive', function () {
+test('certificate hours must be positive', function () {
     [$submission, $student, $coordinator, $category] = reviewScenario();
     $review = startReview($this, $submission, $coordinator);
 
     reviewActingAs($this, $coordinator)
         ->patch(route('reviews.update', $review), [
             ...validClassification($category),
-            'approved_hours' => 0,
+            'certificate_hours' => 0,
         ])
-        ->assertSessionHasErrors('approved_hours');
+        ->assertSessionHasErrors('certificate_hours');
 });
 
-test('the category limit is enforced across approvals for the same student', function () {
+test('all certificate hours are accepted even when the category total exceeds its limit', function () {
     $course = Course::factory()->create();
     $student = Affiliation::factory()->student()->for($course)->create();
     $coordinator = Affiliation::factory()->coordinator()->for($course)->create();
@@ -156,10 +176,16 @@ test('the category limit is enforced across approvals for the same student', fun
     $secondReview = startAndClassify($this, $second, $coordinator, $category, 3);
     reviewActingAs($this, $coordinator)
         ->post(route('reviews.approve', $secondReview))
-        ->assertSessionHasErrors('approved_hours');
+        ->assertSessionHasNoErrors();
 
     expect($first->refresh()->status)->toBe(SubmissionStatus::Approved)
-        ->and($second->refresh()->status)->toBe(SubmissionStatus::UnderReview);
+        ->and($second->refresh()->status)->toBe(SubmissionStatus::Approved);
+
+    $summary = app(BuildStudentAccSummary::class)->execute($student);
+
+    expect($summary['totalCertificateHours'])->toBe(11.0)
+        ->and($summary['recognizedHours'])->toBe(10.0)
+        ->and($summary['categorySummaries']->sole()['recognized_hours'])->toBe(10.0);
 });
 
 test('the analysis screen has clear Portuguese labels and accessible form names', function () {
@@ -169,10 +195,13 @@ test('the analysis screen has clear Portuguese labels and accessible form names'
     reviewActingAs($this, $coordinator)
         ->get(route('submissions.show', $submission))
         ->assertOk()
-        ->assertSeeText('Título identificado no comprovante')
-        ->assertSeeText('Horas a aproveitar')
-        ->assertSee('aria-label="Classificação acadêmica do comprovante"', false)
-        ->assertSeeText('Motivo da rejeição');
+        ->assertSeeText('Título identificado no documento')
+        ->assertSeeText('Carga horária do certificado')
+        ->assertSeeText('Atividade relacionada à área de formação do curso')
+        ->assertSee('aria-label="Decisão acadêmica do documento"', false)
+        ->assertSeeText('Motivo da rejeição')
+        ->assertDontSeeText('Salvar classificação')
+        ->assertDontSeeText('Justificativa da classificação');
 });
 
 test('a student may create a new submission after a rejection', function () {
@@ -222,26 +251,25 @@ function startAndClassify(
     AccSubmission $submission,
     Affiliation $coordinator,
     AccCategory $category,
-    int|float $approvedHours = 8,
+    int|float $certificateHours = 10,
 ): AccReview {
     $review = startReview($testCase, $submission, $coordinator);
     reviewActingAs($testCase, $coordinator)
-        ->patch(route('reviews.update', $review), validClassification($category, $approvedHours))
+        ->patch(route('reviews.update', $review), validClassification($category, $certificateHours))
         ->assertSessionHasNoErrors();
 
     return $review->refresh();
 }
 
 /** @return array<string, mixed> */
-function validClassification(AccCategory $category, int|float $approvedHours = 8): array
+function validClassification(AccCategory $category, int|float $certificateHours = 10): array
 {
     return [
         'original_title' => 'Congresso Tecnologia',
         'normalized_title' => 'Congresso de Tecnologia',
-        'original_hours' => 10,
-        'approved_hours' => $approvedHours,
+        'certificate_hours' => $certificateHours,
+        'is_area_related' => true,
         'acc_category_id' => $category->getKey(),
-        'classification_justification' => 'Título padronizado para o extrato.',
     ];
 }
 

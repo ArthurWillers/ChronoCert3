@@ -11,6 +11,9 @@
         icon="heroicon-o-plus"
     >
         @if ($isCoordinator)
+            <x-button :href="route('users.import.create')" color="outline">
+                <x-heroicon-o-arrow-up-tray class="size-4" /> Importar usuários
+            </x-button>
             <x-button :href="route('users.lookup')" color="outline">
                 <x-heroicon-o-magnifying-glass class="size-4" /> Vincular usuário existente
             </x-button>

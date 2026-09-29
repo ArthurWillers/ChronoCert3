@@ -29,10 +29,17 @@ class StoreUserRequest extends FormRequest
      */
     public function rules(): array
     {
+        $existingUser = User::query()->where('cpf', $this->input('cpf'))->exists();
+
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'cpf' => ['required', 'string', new ValidCpf, Rule::unique(User::class, 'cpf')],
-            'email' => ['required', 'email:rfc', 'max:255', Rule::unique(User::class, 'email')],
+            'name' => [$existingUser ? 'nullable' : 'required', 'string', 'max:255'],
+            'cpf' => ['required', 'string', new ValidCpf],
+            'email' => [
+                $existingUser ? 'nullable' : 'required',
+                'email:rfc',
+                'max:255',
+                Rule::when(! $existingUser, Rule::unique(User::class, 'email')),
+            ],
             'affiliation_type' => ['required', Rule::in(AffiliationType::values())],
             'course_id' => ['nullable', 'integer', Rule::exists(Course::class, 'id')->whereNull('deactivated_at')],
             'registration_number' => ['nullable', 'string', 'max:64'],
@@ -46,6 +53,10 @@ class StoreUserRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            if (User::query()->where('cpf', $this->input('cpf'))->exists()) {
+                return;
+            }
+
             $type = AffiliationType::tryFrom((string) $this->input('affiliation_type'));
 
             if ($type === null) {

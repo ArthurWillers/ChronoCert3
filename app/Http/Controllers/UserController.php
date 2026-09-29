@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Affiliations\ActiveAffiliationContext;
+use App\Actions\Statements\BuildStudentAccSummary;
 use App\Actions\Users\CreateInstitutionalUser;
 use App\Actions\Users\DeleteUser;
 use App\Actions\Users\SendUserInvitation;
@@ -18,6 +19,7 @@ use App\Rules\ValidCpf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -32,6 +34,7 @@ class UserController extends Controller
         private DeleteUser $deleteUser,
         private SendUserInvitation $sendUserInvitation,
         private UpdateUserIdentity $updateUserIdentity,
+        private BuildStudentAccSummary $buildStudentAccSummary,
     ) {}
 
     /**
@@ -83,8 +86,8 @@ class UserController extends Controller
         }
 
         if (($filters['search'] ?? null) !== null) {
-            $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $filters['search']).'%';
-            $query->where('name', 'ilike', $term);
+            $term = '%'.$filters['search'].'%';
+            $query->whereLike('name', $term);
         }
 
         $users = $query->orderBy('name')->paginate(20)->withQueryString();
@@ -127,6 +130,27 @@ class UserController extends Controller
     {
         $activeAffiliation = $this->activeAffiliation($request);
         $data = $request->validated();
+
+        $existingUser = User::query()->where('cpf', $data['cpf'])->first();
+
+        if ($existingUser !== null) {
+            $this->authorize('addAffiliation', $existingUser);
+
+            if ($this->isCoordinator($activeAffiliation)) {
+                $request->session()->put('users.affiliation_target_user_id', $existingUser->getKey());
+            }
+
+            return redirect()
+                ->route('users.affiliations.create', $existingUser)
+                ->withInput($request->only([
+                    'affiliation_type',
+                    'course_id',
+                    'registration_number',
+                    'operational_email',
+                ]))
+                ->with('success', 'Esta conta já existe. Complete apenas os dados do novo vínculo.');
+        }
+
         $type = AffiliationType::from($data['affiliation_type']);
         $courseId = $data['course_id'] ?? null;
         $course = $courseId === null ? null : Course::query()->findOrFail($courseId);
@@ -185,14 +209,21 @@ class UserController extends Controller
             )
             ->latest('id')
             ->get();
+        $studentSummaries = $this->isCoordinator($activeAffiliation)
+            ? $affiliations
+                ->filter(fn (Affiliation $affiliation): bool => $affiliation->type === AffiliationType::Student)
+                ->mapWithKeys(fn (Affiliation $affiliation): array => [
+                    $affiliation->getKey() => $this->buildStudentAccSummary->execute($affiliation),
+                ])
+            : collect();
 
-        return view('users.show', compact('user', 'affiliations', 'activeAffiliation'));
+        return view('users.show', compact('user', 'affiliations', 'activeAffiliation', 'studentSummaries'));
     }
 
     /**
      * Find an existing user by exact CPF before creating a local student affiliation.
      */
-    public function lookup(Request $request): View|RedirectResponse
+    public function lookup(Request $request): View|JsonResponse|RedirectResponse
     {
         $this->authorize('findByCpf', User::class);
 
@@ -207,12 +238,23 @@ class UserController extends Controller
         $user = User::query()->where('cpf', $validated['cpf'])->first();
 
         if ($user === null) {
+            if ($request->expectsJson()) {
+                return response()->json(['found' => false]);
+            }
+
             throw ValidationException::withMessages([
                 'cpf' => 'Nenhum usuário foi encontrado com este CPF.',
             ]);
         }
 
         $request->session()->put('users.affiliation_target_user_id', $user->getKey());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'found' => true,
+                'redirect_to' => route('users.affiliations.create', $user),
+            ]);
+        }
 
         return view('users.lookup', compact('user'));
     }

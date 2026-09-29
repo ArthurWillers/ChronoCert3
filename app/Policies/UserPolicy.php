@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Actions\Affiliations\ActiveAffiliationContext;
 use App\Enums\AffiliationType;
+use App\Models\Course;
 use App\Models\User;
 
 class UserPolicy
@@ -89,6 +90,18 @@ class UserPolicy
     public function findByCpf(User $user): bool
     {
         return $this->viewAny($user);
+    }
+
+    /**
+     * Determine whether the active coordinator may import student affiliations.
+     */
+    public function importStudents(User $user): bool
+    {
+        $affiliation = $this->activeAffiliationContext->for($user);
+
+        return $affiliation?->type === AffiliationType::Coordinator
+            && $affiliation->course_id !== null
+            && Course::query()->active()->whereKey($affiliation->course_id)->exists();
     }
 
     /**

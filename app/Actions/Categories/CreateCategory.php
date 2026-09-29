@@ -16,7 +16,7 @@ class CreateCategory
     public function __construct(private RecordActivity $recordActivity) {}
 
     /**
-     * @param  array{name: string, description: ?string, max_hours: string, guidance: ?string}  $data
+     * @param  array{name: string, description: ?string, max_hours: string}  $data
      */
     public function execute(Course $course, array $data, User $causer, Affiliation $activeAffiliation): AccCategory
     {

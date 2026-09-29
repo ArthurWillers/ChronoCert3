@@ -17,10 +17,12 @@
             <x-nav-link :href="route('dashboard')" :current="request()->routeIs('dashboard')">
                 <x-heroicon-o-home /> Início
             </x-nav-link>
-            @can('viewAny', \App\Models\AccSubmission::class)
+            @can('viewOwnList', \App\Models\AccSubmission::class)
                 <x-nav-link :href="route('submissions.index')" :current="request()->routeIs('submissions.*')">
-                    <x-heroicon-o-document-arrow-up /> Comprovantes
+                    <x-heroicon-o-document-text /> Documentos
                 </x-nav-link>
+            @endcan
+            @can('viewAny', \App\Models\AccSubmission::class)
                 <x-nav-link :href="route('statements.index')" :current="request()->routeIs('statements.*')">
                     <x-heroicon-o-chart-bar-square /> Extrato de ACC
                 </x-nav-link>

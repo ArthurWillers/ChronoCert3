@@ -20,7 +20,7 @@ class ClassifyAccReview
     public function __construct(private RecordActivity $recordActivity) {}
 
     /**
-     * @param  array{original_title: string, normalized_title: string, original_hours?: numeric-string|int|float|null, approved_hours: numeric-string|int|float, acc_category_id: int, classification_justification?: string|null}  $data
+     * @param  array{original_title: string, normalized_title: string, certificate_hours: numeric-string|int|float, is_area_related: bool, acc_category_id: int}  $data
      */
     public function execute(AccReview $review, array $data, Affiliation $reviewerAffiliation, User $causer): AccReview
     {
@@ -51,20 +51,17 @@ class ClassifyAccReview
                 'reviewer_affiliation_id',
                 'acc_category_id',
                 'normalized_title',
-                'original_hours',
-                'approved_hours',
-                'classification_justification',
+                'certificate_hours',
+                'is_area_related',
             ]);
             $review->update([
                 'reviewer_affiliation_id' => $reviewerAffiliation->getKey(),
                 'acc_category_id' => $category->getKey(),
                 'original_title' => trim($data['original_title']),
                 'normalized_title' => trim($data['normalized_title']),
-                'original_hours' => $data['original_hours'] ?? null,
-                'approved_hours' => $data['approved_hours'],
-                'classification_justification' => filled($data['classification_justification'] ?? null)
-                    ? trim((string) $data['classification_justification'])
-                    : null,
+                'certificate_hours' => $data['certificate_hours'],
+                'is_area_related' => $data['is_area_related'],
+                'classification_justification' => null,
             ]);
 
             $this->recordActivity->execute(
@@ -84,7 +81,6 @@ class ClassifyAccReview
                     ->mapWithKeys(fn (mixed $value, string $attribute): array => [
                         $attribute => ['old' => $oldValues[$attribute] ?? null, 'new' => $value],
                     ])->all(),
-                reason: $review->classification_justification,
             );
 
             return $review->refresh();

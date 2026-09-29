@@ -11,7 +11,6 @@ use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\User;
 use App\Notifications\AccSubmissionApprovedNotification;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
@@ -39,9 +38,9 @@ class ApproveAccReview
                 throw ValidationException::withMessages(['review' => 'Esta análise já recebeu uma decisão final.']);
             }
 
-            if ($review->acc_category_id === null || $review->normalized_title === null || $review->approved_hours === null) {
+            if ($review->acc_category_id === null || $review->normalized_title === null || $review->certificate_hours === null) {
                 throw ValidationException::withMessages([
-                    'review' => 'Classifique o comprovante antes de aprová-lo.',
+                    'review' => 'Classifique o documento antes de aceitá-lo.',
                 ]);
             }
 
@@ -55,26 +54,8 @@ class ApproveAccReview
                 ]);
             }
 
-            $approvedHours = (float) $review->approved_hours;
             $categoryLimit = (float) $category->max_hours;
-            $alreadyApproved = (float) AccReview::query()
-                ->where('acc_category_id', $category->getKey())
-                ->whereHas('submission', function (Builder $query) use ($studentAffiliation): void {
-                    $query->where('student_affiliation_id', $studentAffiliation->getKey())
-                        ->where('status', SubmissionStatus::Approved);
-                })
-                ->sum('approved_hours');
-            $availableHours = max(0, $categoryLimit - $alreadyApproved);
-
-            if ($approvedHours <= 0) {
-                throw ValidationException::withMessages(['approved_hours' => 'As horas aprovadas devem ser maiores que zero.']);
-            }
-
-            if ($approvedHours > $availableHours) {
-                throw ValidationException::withMessages([
-                    'approved_hours' => 'A categoria possui apenas '.number_format($availableHours, 2, ',', '.').' hora(s) disponível(is). Ajuste as horas antes de aprovar.',
-                ]);
-            }
+            $certificateHours = (float) $review->certificate_hours;
 
             $completedAt = now();
             $review->update([
@@ -82,9 +63,8 @@ class ApproveAccReview
                 'category_snapshot' => $category->academicSnapshot(),
                 'rules_snapshot' => [
                     'category_max_hours' => number_format($categoryLimit, 2, '.', ''),
-                    'already_approved_hours' => number_format($alreadyApproved, 2, '.', ''),
-                    'available_hours_before_decision' => number_format($availableHours, 2, '.', ''),
-                    'approved_hours' => number_format($approvedHours, 2, '.', ''),
+                    'certificate_hours' => number_format($certificateHours, 2, '.', ''),
+                    'is_area_related' => $review->is_area_related,
                 ],
                 'rejection_reason' => null,
                 'completed_at' => $completedAt,
@@ -111,10 +91,10 @@ class ApproveAccReview
                 ],
                 changes: [
                     'status' => ['old' => SubmissionStatus::UnderReview->value, 'new' => SubmissionStatus::Approved->value],
-                    'approved_hours' => ['old' => null, 'new' => $review->approved_hours],
+                    'certificate_hours' => ['old' => null, 'new' => $review->certificate_hours],
+                    'is_area_related' => ['old' => null, 'new' => $review->is_area_related],
                     'reviewed_at' => ['old' => null, 'new' => $completedAt->toIso8601String()],
                 ],
-                reason: $review->classification_justification,
             );
 
             return $review->refresh()->load('submission.studentAffiliation');
@@ -123,7 +103,6 @@ class ApproveAccReview
         Notification::route('mail', $review->submission->studentAffiliation->email)
             ->notify(new AccSubmissionApprovedNotification(
                 $review->acc_submission_id,
-                (string) $review->approved_hours,
             ));
 
         return $review;

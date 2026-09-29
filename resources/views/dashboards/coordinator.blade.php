@@ -1,28 +1,54 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-5xl">
+    <div class="mx-auto max-w-6xl space-y-6">
         <x-page-header
             title="Visão da coordenação"
-            description="Acesse a operação do curso associado ao vínculo selecionado."
+            description="Comece pelas pendências do curso e acompanhe a operação em um só lugar."
+            :action="route('users.index', ['type' => 'student'])"
+            action-text="Ver discentes"
+            icon="heroicon-o-document-text"
         />
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <x-card>
-                <div class="flex items-start gap-4">
-                    <x-avatar icon="heroicon-o-academic-cap" variant="accent" size="lg" />
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-accent">Vínculo ativo</p>
-                        <h2 class="mt-1 text-lg font-semibold text-neutral-900">Coordenação</h2>
-                        <p class="mt-2 text-sm leading-6 text-neutral-600">{{ $affiliation->email }}</p>
-                    </div>
-                </div>
+        <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+            <x-card size="sm">
+                <p class="text-sm text-neutral-600">Aguardando início</p>
+                <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $submissionCounts['submitted'] }}</p>
+                <p class="mt-1 text-xs text-neutral-500">Documentos enviados</p>
             </x-card>
-
-            <x-card>
-                <x-section-header title="Operação da coordenação" icon="heroicon-o-clipboard-document-list" />
-                <p class="text-sm leading-6 text-neutral-600">
-                    Consulte comprovantes do curso e registre documentos diretamente para discentes. A fila de análise será incluída na próxima etapa.
-                </p>
+            <x-card size="sm">
+                <p class="text-sm text-neutral-600">Em análise</p>
+                <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $submissionCounts['under_review'] }}</p>
+                <p class="mt-1 text-xs text-neutral-500">Aguardando decisão</p>
+            </x-card>
+            <x-card href="{{ route('users.index', ['type' => 'student', 'status' => 'active']) }}" size="sm">
+                <p class="text-sm text-neutral-600">Discentes ativos</p>
+                <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $activeStudentsCount }}</p>
+                <p class="mt-1 text-xs text-neutral-500">No curso atual</p>
+            </x-card>
+            <x-card href="{{ route('categories.index') }}" size="sm">
+                <p class="text-sm text-neutral-600">Categorias ativas</p>
+                <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $activeCategoriesCount }}</p>
+                <p class="mt-1 text-xs text-neutral-500">Disponíveis para classificação</p>
             </x-card>
         </div>
+
+        <x-card>
+            <x-section-header title="Próximas análises" icon="heroicon-o-clipboard-document-list" />
+            <div class="divide-y divide-neutral-100">
+                @forelse ($pendingSubmissions as $submission)
+                    @php
+                        $documentName = $submission->getFirstMedia(\App\Models\AccSubmission::EvidenceCollection)?->getCustomProperty('original_filename') ?? 'Documento sem arquivo';
+                    @endphp
+                    <a href="{{ route('submissions.show', $submission) }}" class="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0 hover:text-accent">
+                        <div class="min-w-0">
+                            <p class="truncate font-semibold text-neutral-900">{{ $documentName }}</p>
+                            <p class="mt-1 truncate text-sm text-neutral-500">{{ $submission->studentAffiliation->user->name }} · {{ $submission->submitted_at->format('d/m/Y H:i') }}</p>
+                        </div>
+                        <x-heroicon-o-chevron-right class="size-5 shrink-0 text-neutral-400" />
+                    </a>
+                @empty
+                    <x-empty-state title="Nenhum documento aguardando início" description="Os novos documentos enviados pelos discentes aparecerão aqui." icon="heroicon-o-check-circle" />
+                @endforelse
+            </div>
+        </x-card>
     </div>
 </x-layouts.app>

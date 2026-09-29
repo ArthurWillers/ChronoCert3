@@ -1,9 +1,11 @@
 <div x-data="{
     lightboxOpen: false,
     imageUrl: '',
+    downloadUrl: '',
     fileName: '',
-    openLightbox(url, name) {
+    openLightbox(url, download, name) {
         this.imageUrl = url;
+        this.downloadUrl = download;
         this.fileName = name;
         this.lightboxOpen = true;
         document.body.style.overflow = 'hidden';
@@ -15,30 +17,22 @@
 }" {{ $attributes }}>
     {{ $slot }}
 
-    <!-- Lightbox Modal -->
     <template x-teleport="body">
-        <div x-show="lightboxOpen" style="display: none; background-color: rgba(0,0,0,0.95);" class="fixed inset-0 z-50 flex flex-col p-4 md:p-8" @keydown.escape.window="closeLightbox">
-            <!-- Top Bar / Actions -->
-            <div class="flex justify-end gap-3 mb-4 shrink-0 z-50">
-                <!-- Download Button -->
-                <x-tooltip text="Baixar original" id="lightbox-download-tooltip" position="bottom" class="inline-flex">
-                    <a :href="imageUrl" :download="fileName" style="background-color: rgba(0,0,0,0.5); color: white;" class="p-2.5 hover:bg-black transition-colors rounded-full flex items-center justify-center cursor-pointer" aria-label="Baixar original" aria-describedby="lightbox-download-tooltip">
+        <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 p-4 text-white md:p-8" role="dialog" aria-modal="true" aria-label="Visualização do comprovante" @keydown.escape.window="closeLightbox">
+            <div class="mb-4 flex shrink-0 items-center justify-between gap-4">
+                <p class="truncate text-sm font-medium" x-text="fileName"></p>
+                <div class="flex shrink-0 items-center gap-2">
+                    <a :href="downloadUrl" class="rounded-full p-2.5 transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white" aria-label="Baixar imagem original">
                         <x-heroicon-o-arrow-down-tray class="size-6" />
                     </a>
-                </x-tooltip>
-                <!-- Close button -->
-                <x-tooltip text="Fechar" id="lightbox-close-tooltip" position="bottom" class="inline-flex">
-                    <button type="button" @click="closeLightbox" style="background-color: rgba(0,0,0,0.5); color: white;" class="p-2.5 hover:bg-black transition-colors rounded-full cursor-pointer" aria-label="Fechar" aria-describedby="lightbox-close-tooltip">
+                    <button type="button" @click="closeLightbox" class="cursor-pointer rounded-full p-2.5 transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white" aria-label="Fechar imagem">
                         <x-heroicon-o-x-mark class="size-6" />
                     </button>
-                </x-tooltip>
+                </div>
             </div>
-
-            <!-- Image Container -->
-            <div class="flex-1 min-h-0 flex items-center justify-center" @click.self="closeLightbox">
-                <img :src="imageUrl" :alt="fileName" class="max-w-full max-h-full object-contain rounded-md shadow-2xl" />
+            <div class="flex min-h-0 flex-1 items-center justify-center" @click.self="closeLightbox">
+                <img :src="imageUrl" :alt="fileName" class="max-h-full max-w-full rounded-md object-contain shadow-2xl" />
             </div>
         </div>
     </template>
 </div>
-

@@ -14,8 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'acc_category_id',
     'original_title',
     'normalized_title',
-    'original_hours',
-    'approved_hours',
+    'certificate_hours',
+    'is_area_related',
     'classification_justification',
     'rejection_reason',
     'category_snapshot',
@@ -28,14 +28,19 @@ class AccReview extends Model
     /** @use HasFactory<AccReviewFactory> */
     use HasFactory;
 
+    /** @var array<string, bool> */
+    protected $attributes = [
+        'is_area_related' => false,
+    ];
+
     /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'original_hours' => 'decimal:2',
-            'approved_hours' => 'decimal:2',
+            'certificate_hours' => 'decimal:2',
+            'is_area_related' => 'boolean',
             'category_snapshot' => 'array',
             'rules_snapshot' => 'array',
             'started_at' => 'datetime',

@@ -15,7 +15,7 @@
     };
 
     $baseClasses =
-        'cursor-pointer inline-flex items-center justify-center font-semibold px-3 py-2 min-h-11 text-base lg:text-sm [&>svg]:size-5 lg:[&>svg]:size-4 rounded-lg disabled:opacity-75 disabled:cursor-default gap-1.5 lg:gap-1';
+        'inline-flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold [&_svg]:size-4 disabled:cursor-default disabled:opacity-75';
 
     $colorClasses = match ($color) {
         'red' => 'bg-red-500 hover:bg-red-700 text-white border-transparent',
@@ -44,7 +44,7 @@
 @else
     <button type="{{ $type }}" :disabled="typeof loading !== 'undefined' && loading" {{ $attributes->except('variant')->merge(['class' => $finalClasses]) }}>
         {{-- O spinner é mostrado quando 'loading' é true --}}
-        <x-heroicon-o-arrow-path class="h-6 w-6 animate-spin" x-show="typeof loading !== 'undefined' && loading" style="display: none;" />
+        <x-heroicon-o-arrow-path class="size-4 animate-spin" x-show="typeof loading !== 'undefined' && loading" style="display: none;" />
 
         {{-- O conteúdo original é mostrado quando 'loading' é false --}}
         <span x-show="typeof loading === 'undefined' || !loading" class="inline-flex items-center gap-1">

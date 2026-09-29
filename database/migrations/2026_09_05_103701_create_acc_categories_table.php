@@ -31,18 +31,20 @@ return new class extends Migration
             CREATE UNIQUE INDEX acc_categories_active_course_name_unique
             ON acc_categories (course_id, name) WHERE deactivated_at IS NULL
         SQL);
-        DB::statement(<<<'SQL'
-            ALTER TABLE acc_categories
-            ADD CONSTRAINT acc_categories_rules_check CHECK (
-                max_hours > 0 AND max_file_size_bytes > 0
-                AND length(trim(name)) > 0
-                AND CASE WHEN jsonb_typeof(allowed_mime_types) = 'array'
-                    THEN jsonb_array_length(allowed_mime_types) > 0 ELSE false END
-                AND ((deactivated_at IS NULL AND deactivation_reason IS NULL)
-                    OR (deactivated_at IS NOT NULL AND deactivation_reason IS NOT NULL
-                        AND length(trim(deactivation_reason)) > 0))
-            )
-        SQL);
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement(<<<'SQL'
+                ALTER TABLE acc_categories
+                ADD CONSTRAINT acc_categories_rules_check CHECK (
+                    max_hours > 0 AND max_file_size_bytes > 0
+                    AND length(trim(name)) > 0
+                    AND CASE WHEN jsonb_typeof(allowed_mime_types) = 'array'
+                        THEN jsonb_array_length(allowed_mime_types) > 0 ELSE false END
+                    AND ((deactivated_at IS NULL AND deactivation_reason IS NULL)
+                        OR (deactivated_at IS NOT NULL AND deactivation_reason IS NOT NULL
+                            AND length(trim(deactivation_reason)) > 0))
+                )
+            SQL);
+        }
     }
 
     public function down(): void

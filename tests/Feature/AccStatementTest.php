@@ -22,10 +22,10 @@ test('the student statement counts only approved submissions and preserves decis
         'acc_category_id' => $category->getKey(),
         'original_title' => 'Evento',
         'normalized_title' => 'Evento acadêmico',
-        'original_hours' => 8,
-        'approved_hours' => 8,
+        'certificate_hours' => 8,
+        'is_area_related' => true,
         'category_snapshot' => $category->academicSnapshot(),
-        'rules_snapshot' => ['approved_hours' => '8.00'],
+        'rules_snapshot' => ['certificate_hours' => '8.00'],
         'started_at' => now()->subDay(),
         'completed_at' => now(),
     ]);
@@ -64,7 +64,7 @@ test('the coordinator statement is isolated to students in the active course', f
         'acc_category_id' => $category->getKey(),
         'original_title' => 'Atividade',
         'normalized_title' => 'Atividade',
-        'approved_hours' => 5,
+        'certificate_hours' => 5,
         'started_at' => now()->subDay(),
         'completed_at' => now(),
     ]);

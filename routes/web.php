@@ -8,6 +8,7 @@ use App\Http\Controllers\AffiliationSelectionController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StudentAffiliationImportController;
 use App\Http\Controllers\UserAffiliationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -34,8 +35,13 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('active-affiliation')->group(function (): void {
         Route::get('/acc-statement', AccStatementController::class)->name('statements.index');
         Route::get('/submissions', [AccSubmissionController::class, 'index'])->name('submissions.index');
+        Route::get('/submissions/download-all', [AccSubmissionController::class, 'downloadAll'])->name('submissions.download-all');
         Route::get('/submissions/create', [AccSubmissionController::class, 'create'])->name('submissions.create');
         Route::post('/submissions', [AccSubmissionController::class, 'store'])->name('submissions.store');
+        Route::get('/submissions/students/{studentAffiliation}', [AccSubmissionController::class, 'indexFor'])
+            ->name('submissions.students.index');
+        Route::get('/submissions/students/{studentAffiliation}/download-all', [AccSubmissionController::class, 'downloadAllFor'])
+            ->name('submissions.students.download-all');
         Route::get('/submissions/students/{studentAffiliation}/create', [AccSubmissionController::class, 'createFor'])
             ->name('submissions.students.create');
         Route::post('/submissions/students/{studentAffiliation}', [AccSubmissionController::class, 'storeFor'])
@@ -44,6 +50,8 @@ Route::middleware('auth')->group(function (): void {
             ->name('submissions.review.store');
         Route::patch('/reviews/{review}', [AccReviewController::class, 'update'])
             ->name('reviews.update');
+        Route::post('/reviews/{review}/complete', [AccReviewController::class, 'complete'])
+            ->name('reviews.complete');
         Route::post('/reviews/{review}/approve', [AccReviewController::class, 'approve'])
             ->name('reviews.approve');
         Route::post('/reviews/{review}/reject', [AccReviewController::class, 'reject'])
@@ -65,6 +73,16 @@ Route::middleware('auth')->group(function (): void {
         Route::resource('categories', AccCategoryController::class);
 
         Route::get('/users/lookup', [UserController::class, 'lookup'])->name('users.lookup');
+        Route::get('/users/import', [StudentAffiliationImportController::class, 'create'])
+            ->name('users.import.create');
+        Route::get('/users/import/template', [StudentAffiliationImportController::class, 'template'])
+            ->name('users.import.template');
+        Route::post('/users/import/preview', [StudentAffiliationImportController::class, 'preview'])
+            ->name('users.import.preview');
+        Route::post('/users/import/confirm', [StudentAffiliationImportController::class, 'confirm'])
+            ->name('users.import.confirm');
+        Route::get('/users/import/report/{report}', [StudentAffiliationImportController::class, 'report'])
+            ->name('users.import.report');
         Route::patch('/users/{user}/identity', [UserController::class, 'updateIdentity'])->name('users.identity.update');
         Route::post('/users/{user}/invitation', [UserController::class, 'sendInvitation'])->name('users.invitation.send');
         Route::get('/users/{user}/affiliations/create', [UserAffiliationController::class, 'create'])
