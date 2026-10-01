@@ -32,7 +32,7 @@
                     />
                     <p data-existing-user-feedback class="mt-2 hidden text-sm text-accent" aria-live="polite"></p>
                 </div>
-                    <x-form-input name="email" type="email" label="E-mail" required autocomplete="email" />
+                <x-form-input name="email" type="email" label="E-mail de acesso e do vínculo" required autocomplete="email" />
             </div>
         </x-card>
 

@@ -6,7 +6,7 @@
     <div class="mt-6 max-w-3xl space-y-6">
         <x-callout color="neutral" title="Curso da importação">
             Os vínculos serão criados no curso <strong>{{ $activeAffiliation->course->name }}</strong>.
-            Se o CPF já estiver cadastrado, o nome e o e-mail de login da conta serão preservados; o e-mail da planilha será usado no vínculo.
+            Para uma conta nova, o e-mail da planilha será usado para login e no vínculo. Se o CPF já estiver cadastrado, o acesso da conta será preservado e o e-mail da planilha será usado somente no vínculo.
         </x-callout>
 
         <x-card>
