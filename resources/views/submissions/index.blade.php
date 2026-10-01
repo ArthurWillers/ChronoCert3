@@ -53,9 +53,10 @@
         </x-filter-bar>
 
         <x-table>
-            <x-table.header class="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_130px] sm:grid">
+            <x-table.header class="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_160px_130px] whitespace-nowrap sm:grid lg:[&>div]:px-5">
                 <x-table.column>DOCUMENTO</x-table.column>
                 <x-table.column>CATEGORIA</x-table.column>
+                <x-table.column align="right">CARGA HORÁRIA</x-table.column>
                 <x-table.column align="right">SITUAÇÃO</x-table.column>
             </x-table.header>
             <div class="divide-y divide-neutral-100">
@@ -71,21 +72,27 @@
                             ?? $submission->getFirstMedia(\App\Models\AccSubmission::EvidenceCollection)?->getCustomProperty('original_filename')
                             ?? 'Documento sem arquivo';
                         $categoryName = data_get($submission->review?->category_snapshot, 'name', $submission->review?->category?->name ?? 'Sem categoria');
+                        $certificateHours = $submission->review?->certificate_hours;
+                        $certificateHoursLabel = $certificateHours === null
+                            ? 'A informar'
+                            : number_format((float) $certificateHours, 2, ',', '.').' h';
                     @endphp
-                    <x-table.row :href="route('submissions.show', $submission)" class="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_130px] sm:grid">
+                    <x-table.row :href="route('submissions.show', $submission)" class="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_160px_130px] whitespace-nowrap sm:grid">
                         <x-table.cell>
                             <div class="min-w-0">
                                 <p class="truncate font-semibold text-neutral-900">{{ $documentName }}</p>
-                                <p class="mt-1 text-sm text-neutral-500">{{ $submission->origin->label() }} · {{ $submission->submitted_at->format('d/m/Y H:i') }}</p>
+                                <p class="mt-1 truncate text-sm text-neutral-500">{{ $submission->origin->label() }} · {{ $submission->submitted_at->format('d/m/Y H:i') }}</p>
                             </div>
                         </x-table.cell>
                         <x-table.cell class="truncate text-sm text-neutral-600">{{ $categoryName }}</x-table.cell>
+                        <x-table.cell align="right" class="text-sm tabular-nums">{{ $certificateHoursLabel }}</x-table.cell>
                         <x-table.cell align="right"><x-badge :color="$color" size="sm">{{ $submission->status->label() }}</x-badge></x-table.cell>
                         <x-slot:mobile>
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <p class="truncate font-semibold text-neutral-900">{{ $documentName }}</p>
-                                    <p class="mt-1 text-sm text-neutral-500">{{ $categoryName }} · {{ $submission->submitted_at->format('d/m/Y') }}</p>
+                                    <p class="mt-1 truncate text-sm text-neutral-500">{{ $categoryName }} · {{ $submission->submitted_at->format('d/m/Y') }}</p>
+                                    <p class="mt-1 whitespace-nowrap text-sm text-neutral-600">Carga horária: {{ $certificateHoursLabel }}</p>
                                 </div>
                                 <x-badge :color="$color" size="sm">{{ $submission->status->label() }}</x-badge>
                             </div>

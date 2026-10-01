@@ -1,8 +1,8 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-4xl">
+    <div class="mx-auto max-w-xl space-y-6">
         <x-page-header
-            title="Escolha o vínculo de operação"
-            description="Selecione como você deseja trabalhar no ChronoCert nesta sessão."
+            title="Selecionar vínculo"
+            description="Escolha o perfil e o curso para acessar o painel."
         />
 
         @if ($affiliations->isEmpty())
@@ -14,57 +14,23 @@
                 />
             </x-card>
         @else
-            <form method="POST" action="{{ route('affiliations.select.store') }}" class="space-y-6">
+            <form method="POST" action="{{ route('affiliations.select.store') }}">
                 @csrf
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    @foreach ($affiliations as $affiliation)
-                        <label class="group relative block h-full cursor-pointer">
-                            <input
-                                type="radio"
-                                name="affiliation_id"
-                                value="{{ $affiliation->getKey() }}"
-                                class="peer sr-only"
-                                @checked((string) old('affiliation_id') === (string) $affiliation->getKey())
-                                required
-                            />
-                            <x-card class="h-full border-2 border-neutral-200 transition-colors peer-checked:border-accent peer-checked:bg-accent/5">
-                                <div class="flex items-start gap-4">
-                                    <x-avatar icon="heroicon-o-identification" variant="accent" size="lg" />
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <div>
-                                                <p class="text-xs font-semibold uppercase tracking-wide text-accent">Vínculo institucional</p>
-                                                <h2 class="mt-1 text-lg font-semibold text-neutral-900">{{ $affiliation->type->label() }}</h2>
-                                            </div>
-                                            <x-heroicon-o-check-circle class="size-6 text-accent opacity-0 transition-opacity peer-checked:opacity-100" />
-                                        </div>
-                                        <dl class="mt-5 space-y-2 text-sm text-neutral-600">
-                                            @if ($affiliation->course)
-                                                <div class="flex items-center gap-2">
-                                                    <dt class="font-medium text-neutral-800">Curso:</dt>
-                                                    <dd class="truncate">{{ $affiliation->course->name }}</dd>
-                                                </div>
-                                            @endif
-                                            <div class="flex items-center gap-2">
-                                                <dt class="font-medium text-neutral-800">E-mail operacional:</dt>
-                                                <dd class="truncate">{{ $affiliation->email }}</dd>
-                                            </div>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </x-card>
-                        </label>
-                    @endforeach
-                </div>
+                <x-card class="space-y-6">
+                    <x-form-select name="affiliation_id" label="Vínculo" required autofocus>
+                        <option value="">Selecione um vínculo</option>
+                        @foreach ($affiliations as $affiliation)
+                            <option value="{{ $affiliation->getKey() }}" @selected((string) old('affiliation_id', session('active_affiliation_id')) === (string) $affiliation->getKey())>
+                                {{ $affiliation->type->label() }} — {{ $affiliation->course?->name ?? 'Atuação institucional' }}
+                            </option>
+                        @endforeach
+                    </x-form-select>
 
-                <x-error name="affiliation_id" />
-
-                <div class="flex justify-end">
-                    <x-button type="submit" color="accent">
-                        Continuar <x-heroicon-o-arrow-right class="size-4" />
-                    </x-button>
-                </div>
+                    <div class="flex justify-end">
+                        <x-button type="submit" color="accent">Usar vínculo</x-button>
+                    </div>
+                </x-card>
             </form>
         @endif
     </div>

@@ -20,3 +20,32 @@ test('a user can select one of their active affiliations', function () {
     expect($firstAffiliation->fresh()->last_used_at)->toBeNull()
         ->and($selectedAffiliation->fresh()->last_used_at)->not->toBeNull();
 });
+
+test('an administrator can switch to their coordinator affiliation and return to administration', function () {
+    $administrator = Affiliation::factory()->administrator()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($administrator->user)->create();
+
+    $this->actingAs($administrator->user)
+        ->withSession(['active_affiliation_id' => $administrator->getKey()])
+        ->get(route('affiliations.select'))
+        ->assertOk()
+        ->assertSeeText($coordinator->course->name);
+
+    $this->post(route('affiliations.select.store'), ['affiliation_id' => $coordinator->getKey()])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('active_affiliation_id', $coordinator->getKey());
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertSeeText('Visão da coordenação');
+
+    $this->get(route('affiliations.select'))->assertOk();
+
+    $this->post(route('affiliations.select.store'), ['affiliation_id' => $administrator->getKey()])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('active_affiliation_id', $administrator->getKey());
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertSeeText('Visão institucional');
+});
