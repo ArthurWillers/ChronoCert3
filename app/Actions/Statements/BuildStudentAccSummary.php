@@ -48,13 +48,20 @@ class BuildStudentAccSummary
                 ];
             });
 
+        $minimumAreaHours = $studentAffiliation->course?->minimumAreaHours();
+        $recognizedAreaHours = (float) $categorySummaries->sum('recognized_area_hours');
+
+        if ($minimumAreaHours !== null) {
+            $recognizedAreaHours = min($recognizedAreaHours, $minimumAreaHours);
+        }
+
         return [
             'categorySummaries' => $categorySummaries,
             'acceptedDocumentsCount' => $categorySummaries->sum('accepted_documents_count'),
             'totalCertificateHours' => $categorySummaries->sum('certificate_hours'),
             'recognizedHours' => $categorySummaries->sum('recognized_hours'),
-            'recognizedAreaHours' => $categorySummaries->sum('recognized_area_hours'),
-            'minimumAreaHours' => $studentAffiliation->course?->minimumAreaHours(),
+            'recognizedAreaHours' => $recognizedAreaHours,
+            'minimumAreaHours' => $minimumAreaHours,
         ];
     }
 }

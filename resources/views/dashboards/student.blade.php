@@ -26,8 +26,13 @@
             </x-card>
             <x-card href="{{ route('statements.index') }}" size="sm">
                 <p class="text-sm text-neutral-600">Atividades na área</p>
-                <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ number_format($summary['recognizedAreaHours'], 2, ',', '.') }} h</p>
-                <p class="mt-1 text-xs text-neutral-500">Considerando os limites</p>
+                <p class="mt-2 text-2xl font-semibold text-neutral-900">
+                    {{ number_format($summary['recognizedAreaHours'], 2, ',', '.') }} h
+                    @if ($summary['minimumAreaHours'] !== null)
+                        <span class="text-sm font-medium text-neutral-500">de {{ number_format($summary['minimumAreaHours'], 2, ',', '.') }} h</span>
+                    @endif
+                </p>
+                <p class="mt-1 text-xs text-neutral-500">{{ $summary['minimumAreaHours'] !== null ? 'Até o mínimo exigido pelo curso' : 'Sem mínimo exigido pelo curso' }}</p>
             </x-card>
         </div>
 

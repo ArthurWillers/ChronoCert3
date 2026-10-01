@@ -182,9 +182,6 @@
                                                     <x-heroicon-o-chevron-right class="size-4 shrink-0 text-neutral-400 group-hover:text-accent" />
                                                 </div>
                                                 <p class="mt-3 text-sm font-medium text-neutral-800">{{ number_format($categorySummary['recognized_hours'], 2, ',', '.') }} h <span class="font-normal text-neutral-500">de {{ number_format((float) $categorySummary['category']->max_hours, 2, ',', '.') }} h na categoria</span></p>
-                                                @if ($categorySummary['recognized_area_hours'] > 0)
-                                                    <p class="mt-1 text-xs text-neutral-500">{{ number_format($categorySummary['recognized_area_hours'], 2, ',', '.') }} h na área</p>
-                                                @endif
                                             </a>
                                         @empty
                                             <p class="text-sm text-neutral-500">Nenhuma categoria cadastrada para este curso.</p>

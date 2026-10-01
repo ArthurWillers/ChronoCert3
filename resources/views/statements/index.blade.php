@@ -75,9 +75,6 @@
                             <x-progress class="mt-4" :value="$summary['recognized_hours']" :max="$summary['category']->max_hours" :show-value="false" />
                             <p class="mt-3 text-sm text-neutral-600">
                                 Certificados aceitos: {{ number_format($summary['certificate_hours'], 2, ',', '.') }} h.
-                                @if ($summary['recognized_area_hours'] > 0)
-                                    Na área de formação: {{ number_format($summary['recognized_area_hours'], 2, ',', '.') }} h.
-                                @endif
                             </p>
                         </div>
                     @empty
