@@ -43,7 +43,7 @@ class StoreUserRequest extends FormRequest
             'affiliation_type' => ['required', Rule::in(AffiliationType::values())],
             'course_id' => ['nullable', 'integer', Rule::exists(Course::class, 'id')->whereNull('deactivated_at')],
             'registration_number' => ['nullable', 'string', 'max:64'],
-            'operational_email' => ['required', 'email:rfc', 'max:255'],
+            'operational_email' => ['nullable', 'email:rfc', 'max:255'],
         ];
     }
 
@@ -100,7 +100,9 @@ class StoreUserRequest extends FormRequest
             'name' => trim((string) $this->input('name')),
             'cpf' => preg_replace('/\D/', '', (string) $this->input('cpf')) ?? '',
             'email' => Str::lower(trim((string) $this->input('email'))),
-            'operational_email' => Str::lower(trim((string) $this->input('operational_email'))),
+            'operational_email' => filled($this->input('operational_email'))
+                ? Str::lower(trim((string) $this->input('operational_email')))
+                : null,
             'registration_number' => filled($this->input('registration_number')) ? trim((string) $this->input('registration_number')) : null,
         ]);
     }

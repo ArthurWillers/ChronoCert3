@@ -13,7 +13,7 @@
 
         <x-card>
             <h2 class="text-base font-semibold text-neutral-900">Dados da conta</h2>
-            <p class="mt-1 text-sm text-neutral-500">CPF e e-mail de login identificam a conta de acesso.</p>
+            <p class="mt-1 text-sm text-neutral-500">CPF e e-mail identificam a conta e o vínculo inicial.</p>
 
             <div class="mt-6 grid gap-5 sm:grid-cols-2">
                 <div class="sm:col-span-2">
@@ -32,7 +32,7 @@
                     />
                     <p data-existing-user-feedback class="mt-2 hidden text-sm text-accent" aria-live="polite"></p>
                 </div>
-                <x-form-input name="email" type="email" label="E-mail de login" required autocomplete="email" />
+                    <x-form-input name="email" type="email" label="E-mail" required autocomplete="email" />
             </div>
         </x-card>
 
@@ -70,9 +70,6 @@
 
                 <div x-show="type === 'student'" x-cloak>
                     <x-form-input name="registration_number" label="Matrícula" :value="old('registration_number')" autocomplete="off" />
-                </div>
-                <div :class="type === 'student' ? '' : 'sm:col-span-2'">
-                    <x-form-input name="operational_email" type="email" label="E-mail operacional do vínculo" required autocomplete="email" help="Usado na atuação acadêmica deste vínculo." />
                 </div>
             </div>
         </x-card>

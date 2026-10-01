@@ -142,12 +142,12 @@ class UserController extends Controller
 
             return redirect()
                 ->route('users.affiliations.create', $existingUser)
-                ->withInput($request->only([
-                    'affiliation_type',
-                    'course_id',
-                    'registration_number',
-                    'operational_email',
-                ]))
+                ->withInput([
+                    'affiliation_type' => $data['affiliation_type'],
+                    'course_id' => $data['course_id'] ?? null,
+                    'registration_number' => $data['registration_number'] ?? null,
+                    'operational_email' => $data['email'] ?? $data['operational_email'] ?? '',
+                ])
                 ->with('success', 'Esta conta já existe. Complete apenas os dados do novo vínculo.');
         }
 
@@ -173,7 +173,7 @@ class UserController extends Controller
             affiliationData: [
                 'type' => $type,
                 'course_id' => $course?->getKey(),
-                'email' => $data['operational_email'],
+                'email' => $data['email'],
                 'registration_number' => $data['registration_number'] ?? null,
             ],
             causer: $request->user(),
