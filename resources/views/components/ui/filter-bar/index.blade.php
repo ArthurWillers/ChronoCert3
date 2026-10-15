@@ -33,7 +33,7 @@
                 <div class="absolute left-3 flex items-center pointer-events-none">
                     <x-heroicon-m-magnifying-glass class="h-4 w-4 text-neutral-400" />
                 </div>
-                <input type="text" name="{{ $searchName }}" value="{{ $searchValue }}" placeholder="{{ $searchPlaceholder }}"
+                <input type="text" name="{{ $searchName }}" value="{{ $searchValue }}" placeholder="{{ $searchPlaceholder }}" aria-label="{{ $searchPlaceholder }}"
                        class="w-full pl-9 pr-3 py-2 sm:py-1.5 bg-transparent border-0 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-0">
             </div>
         @endif

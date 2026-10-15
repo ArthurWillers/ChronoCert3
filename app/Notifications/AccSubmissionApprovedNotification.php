@@ -11,7 +11,10 @@ class AccSubmissionApprovedNotification extends Notification implements ShouldQu
 {
     use Queueable;
 
-    public function __construct(public int $submissionId) {}
+    public function __construct(public int $submissionId)
+    {
+        $this->afterCommit();
+    }
 
     /** @return array<int, string> */
     public function via(object $notifiable): array

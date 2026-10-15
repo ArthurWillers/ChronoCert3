@@ -11,7 +11,10 @@ class AccSubmissionRejectedNotification extends Notification implements ShouldQu
 {
     use Queueable;
 
-    public function __construct(public int $submissionId, public string $rejectionReason) {}
+    public function __construct(public int $submissionId, public string $rejectionReason)
+    {
+        $this->afterCommit();
+    }
 
     /** @return array<int, string> */
     public function via(object $notifiable): array

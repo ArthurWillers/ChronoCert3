@@ -19,6 +19,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
     public function __construct(
         private RecordActivity $recordActivity,
         private ActiveAffiliationContext $activeAffiliationContext,
+        private InvalidateUserSessions $invalidateUserSessions,
     ) {}
 
     /**
@@ -43,6 +44,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
             $user->forceFill([
                 'password' => Hash::make($input['password']),
             ])->save();
+            $this->invalidateUserSessions->execute($user, keepCurrentSession: true);
 
             $this->recordActivity->execute(
                 event: AuditEvent::UserPasswordChanged,

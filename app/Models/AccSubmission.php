@@ -26,6 +26,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
     'reviewed_at',
     'rejected_at',
     'purge_at',
+    'document_sha256',
 ])]
 class AccSubmission extends Model implements HasMedia
 {

@@ -8,17 +8,19 @@
         this.downloadUrl = download;
         this.fileName = name;
         this.lightboxOpen = true;
+        this.$refs.dialog.showModal();
         document.body.style.overflow = 'hidden';
     },
     closeLightbox() {
         this.lightboxOpen = false;
+        this.$refs.dialog.close();
         document.body.style.overflow = '';
     }
 }" {{ $attributes }}>
     {{ $slot }}
 
     <template x-teleport="body">
-        <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 p-4 text-white md:p-8" role="dialog" aria-modal="true" aria-label="Visualização do comprovante" @keydown.escape.window="closeLightbox">
+        <dialog x-ref="dialog" class="fixed inset-0 z-50 m-0 hidden h-full max-h-none w-full max-w-none flex-col border-0 bg-neutral-950/95 p-4 text-white open:flex md:p-8" aria-label="Visualização do comprovante" @cancel.prevent="closeLightbox()">
             <div class="mb-4 flex shrink-0 items-center justify-between gap-4">
                 <p class="truncate text-sm font-medium" x-text="fileName"></p>
                 <div class="flex shrink-0 items-center gap-2">
@@ -33,6 +35,6 @@
             <div class="flex min-h-0 flex-1 items-center justify-center" @click.self="closeLightbox">
                 <img :src="imageUrl" :alt="fileName" class="max-h-full max-w-full rounded-md object-contain shadow-2xl" />
             </div>
-        </div>
+        </dialog>
     </template>
 </div>

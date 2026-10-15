@@ -12,7 +12,7 @@
             :title="$isCoordinatorSubmission ? 'Registrar documento para discente' : 'Enviar documento de ACC'"
             :description="$isCoordinatorSubmission
                 ? 'Ao registrar, o documento abrirá diretamente na etapa de revisão acadêmica.'
-                : 'O envio cria um documento em análise. Não há rascunho ou reenvio neste registro.'"
+                : 'Envie um arquivo por documento. Comprovantes já registrados abrirão o envio existente.'"
         />
 
         <x-card>
@@ -21,7 +21,7 @@
                 <p class="mt-1">Matrícula {{ $studentAffiliation->registration_number }}</p>
             </div>
 
-            <form id="submission-form" method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-6">
+            <form id="submission-form" method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-6" x-data="{ loading: false }" @submit="if (loading) { $event.preventDefault(); return; } loading = true">
                 @csrf
 
                 <x-dropzone
@@ -35,6 +35,7 @@
                 <x-callout color="blue">
                     O arquivo ficará em armazenamento privado e só poderá ser visualizado pelo discente beneficiário e pela coordenação do mesmo curso.
                 </x-callout>
+                <p x-show="loading" x-cloak role="status" class="flex items-center gap-2 text-sm font-medium text-accent"><x-heroicon-o-arrow-path class="size-4 animate-spin motion-reduce:animate-none" /> Enviando documento. Aguarde a confirmação.</p>
 
                 <div class="flex justify-end gap-3">
                     <x-form-actions

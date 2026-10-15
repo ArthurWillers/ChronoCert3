@@ -36,6 +36,15 @@ class AccSubmissionPolicy
             && $affiliation->course_id !== null;
     }
 
+    public function viewReviewQueue(User $user): bool
+    {
+        $affiliation = $this->activeAffiliationContext->for($user);
+
+        return $affiliation?->isActive()
+            && $affiliation->type === AffiliationType::Coordinator
+            && $affiliation->course_id !== null;
+    }
+
     public function viewForStudent(User $user, Affiliation $studentAffiliation): bool
     {
         $affiliation = $this->activeAffiliationContext->for($user);

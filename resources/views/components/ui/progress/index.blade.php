@@ -22,7 +22,7 @@
         </div>
     @endif
     
-    <div class="w-full bg-neutral-200/80 rounded-full h-2 overflow-hidden shadow-inner">
+    <div role="progressbar" aria-label="{{ $label ?? 'Progresso de horas' }}" aria-valuemin="0" aria-valuemax="{{ $max }}" aria-valuenow="{{ min($value, $max) }}" class="w-full bg-neutral-200/80 rounded-full h-2 overflow-hidden shadow-inner">
         <div class="bg-[var(--color-accent)] h-full rounded-full transition-all duration-500 ease-out" 
              style="width: {{ $percentage }}%"></div>
     </div>

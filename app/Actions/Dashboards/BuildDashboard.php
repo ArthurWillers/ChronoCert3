@@ -61,8 +61,8 @@ class BuildDashboard
             'pendingSubmissions' => (clone $submissions)
                 ->where('status', SubmissionStatus::Submitted)
                 ->with(['studentAffiliation.user:id,name', 'media'])
-                ->latest('submitted_at')
-                ->latest('id')
+                ->oldest('submitted_at')
+                ->oldest('id')
                 ->limit(5)
                 ->get(),
         ];

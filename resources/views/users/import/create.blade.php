@@ -32,6 +32,7 @@
                     label="Selecione o arquivo CSV"
                     sublabel="ou arraste e solte o arquivo aqui"
                     accept=".csv,text/csv,text/plain"
+                    :max-size-bytes="2 * 1024 * 1024"
                     required
                 />
                 <div class="flex justify-end">

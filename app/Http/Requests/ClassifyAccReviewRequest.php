@@ -21,7 +21,7 @@ class ClassifyAccReviewRequest extends FormRequest
         return [
             'original_title' => ['required', 'string', 'max:255'],
             'normalized_title' => ['required', 'string', 'max:255'],
-            'certificate_hours' => ['required', 'numeric', 'gt:0', 'max:999999.99'],
+            'certificate_hours' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:999999.99'],
             'is_area_related' => ['required', 'boolean'],
             'acc_category_id' => ['required', 'integer', 'exists:acc_categories,id'],
         ];
@@ -31,6 +31,9 @@ class ClassifyAccReviewRequest extends FormRequest
     {
         $this->merge([
             'is_area_related' => $this->boolean('is_area_related'),
+            'certificate_hours' => is_string($this->input('certificate_hours'))
+                ? str_replace(',', '.', trim($this->input('certificate_hours')))
+                : $this->input('certificate_hours'),
         ]);
     }
 
@@ -42,6 +45,8 @@ class ClassifyAccReviewRequest extends FormRequest
             'normalized_title.required' => 'Informe o título acadêmico da atividade.',
             'certificate_hours.required' => 'Informe a carga horária indicada no certificado.',
             'certificate_hours.gt' => 'A carga horária do certificado deve ser maior que zero.',
+            'certificate_hours.numeric' => 'Informe a carga horária em horas, por exemplo 12,5.',
+            'certificate_hours.decimal' => 'Use no máximo duas casas decimais para a carga horária.',
             'acc_category_id.required' => 'Selecione a categoria aplicada.',
             'acc_category_id.exists' => 'A categoria selecionada não existe.',
         ];

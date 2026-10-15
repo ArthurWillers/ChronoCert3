@@ -10,6 +10,7 @@ use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -48,17 +49,37 @@ class CreateSubmission
 
             $this->ensureCompatibleAffiliations($studentAffiliation, $submittedByAffiliation, $course, $origin);
 
+            $temporaryPath = $document->getRealPath();
+            $fileHash = $temporaryPath === false ? false : hash_file('sha256', $temporaryPath);
+
+            if ($fileHash === false) {
+                throw ValidationException::withMessages(['document' => 'Não foi possível ler o arquivo. Selecione o documento novamente.']);
+            }
+
+            $existingSubmission = AccSubmission::query()
+                ->whereBelongsTo($studentAffiliation, 'studentAffiliation')
+                ->whereIn('status', [SubmissionStatus::Submitted, SubmissionStatus::UnderReview, SubmissionStatus::Approved])
+                ->where(fn (Builder $query): Builder => $query
+                    ->where('document_sha256', $fileHash)
+                    ->orWhereHas('media', fn (Builder $media): Builder => $media
+                        ->where('collection_name', AccSubmission::EvidenceCollection)
+                        ->where('custom_properties->sha256', $fileHash)))
+                ->first();
+
+            if ($existingSubmission !== null) {
+                return $existingSubmission;
+            }
+
             $submission = AccSubmission::create([
                 'student_affiliation_id' => $studentAffiliation->getKey(),
                 'submitted_by_affiliation_id' => $submittedByAffiliation->getKey(),
                 'origin' => $origin,
                 'status' => SubmissionStatus::Submitted,
                 'submitted_at' => now(),
+                'document_sha256' => $fileHash,
             ]);
 
             $extension = Str::lower($document->getClientOriginalExtension());
-            $temporaryPath = $document->getRealPath();
-            $fileHash = $temporaryPath === false ? false : hash_file('sha256', $temporaryPath);
             $detectedMimeType = $temporaryPath === false
                 ? null
                 : (new \finfo(FILEINFO_MIME_TYPE))->file($temporaryPath);

@@ -4,6 +4,7 @@
     'accept' => '*',
     'label' => 'Clique para fazer upload',
     'sublabel' => 'ou arraste e solte o arquivo aqui',
+    'maxSizeBytes' => 10 * 1024 * 1024,
 ])
 
 <div x-data="{
@@ -11,6 +12,27 @@
         defaultLabel: @js($label),
         textSwapTimer: null,
         files: [],
+        clientError: '',
+        validateFiles(files) {
+            this.clientError = '';
+            if (!@js($multiple) && files.length > 1) {
+                this.clientError = 'Selecione apenas um arquivo por envio.';
+                return false;
+            }
+            const accepted = @js($accept).toLowerCase().split(',').map(value => value.trim());
+            for (const file of files) {
+                if (file.size === 0 || file.size > @js($maxSizeBytes)) {
+                    this.clientError = 'O arquivo deve ter conteúdo e no máximo '+(@js($maxSizeBytes) / 1024 / 1024)+' MB.';
+                    return false;
+                }
+                const allowed = accepted.some(type => type === '*' || type === '*/*' || (type.startsWith('.') ? file.name.toLowerCase().endsWith(type) : type.endsWith('/*') ? file.type.startsWith(type.slice(0, -1)) : file.type === type));
+                if (!allowed) {
+                    this.clientError = 'Formato não aceito. '+@js($sublabel);
+                    return false;
+                }
+            }
+            return true;
+        },
         setDropping(value) {
             if (this.isDropping === value) {
                 return;
@@ -40,11 +62,24 @@
         },
         handleDrop(e) {
             this.setDropping(false);
+            if (!this.validateFiles(Array.from(e.dataTransfer.files))) {
+                this.files = [];
+                this.$refs.fileInput.value = '';
+                this.$refs.fileInput.setCustomValidity(this.clientError);
+                return;
+            }
             this.files = Array.from(e.dataTransfer.files);
             $refs.fileInput.files = e.dataTransfer.files;
             $refs.fileInput.dispatchEvent(new Event('change'));
         },
         handleFileSelect(e) {
+            e.target.setCustomValidity('');
+            if (!this.validateFiles(Array.from(e.target.files))) {
+                e.target.value = '';
+                this.files = [];
+                e.target.setCustomValidity(this.clientError);
+                return;
+            }
             this.files = Array.from(e.target.files);
         },
         removeFile(index) {
@@ -64,7 +99,7 @@
         @dragleave.prevent="setDropping(false)"
         @drop.prevent="handleDrop($event)"
         :class="isDropping ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5' : 'border-neutral-300 hover:bg-neutral-50'"
-        class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition motion-ease-smooth-out motion-duration-quick">
+        class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 motion-ease-smooth-out motion-duration-quick">
         
         <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
             <x-heroicon-o-cloud-arrow-up
@@ -75,7 +110,7 @@
             <p class="mb-1 text-sm text-neutral-500">
                 <span x-ref="dropzoneText" class="t-text-swap font-semibold">{{ $label }}</span>
             </p>
-            <p
+            <p id="{{ $name }}-help"
                 class="text-xs text-neutral-500"
                 x-show="!isDropping"
                 x-transition:enter="transition ease-in-out motion-duration-quick"
@@ -87,8 +122,10 @@
             >{{ $sublabel }}</p>
         </div>
         
-        <input x-ref="fileInput" @change="handleFileSelect" id="{{ $name }}" name="{{ $name }}" type="file" class="hidden" {{ $multiple ? 'multiple' : '' }} accept="{{ $accept }}" {{ $attributes }} />
+        <input x-ref="fileInput" @change="handleFileSelect" @invalid="if (!$event.target.validationMessage || $event.target.validity.valueMissing) $event.target.setCustomValidity(clientError || 'Selecione um arquivo para continuar.')" id="{{ $name }}" name="{{ $name }}" type="file" class="sr-only" {{ $multiple ? 'multiple' : '' }} accept="{{ $accept }}" aria-describedby="{{ $name }}-help {{ $name }}-client-error {{ $name }}-error" :aria-invalid="clientError ? 'true' : 'false'" {{ $attributes }} />
     </label>
+
+    <p id="{{ $name }}-client-error" x-show="clientError" x-text="clientError" x-cloak role="alert" class="mt-2 text-sm font-medium text-red-600"></p>
 
     {{-- File List --}}
     <template x-if="files.length > 0">
@@ -100,7 +137,7 @@
                         <span class="truncate font-medium text-neutral-700" x-text="file.name"></span>
                         <span class="text-xs text-neutral-500 shrink-0" x-text="(file.size / 1024 / 1024).toFixed(2) + ' MB'"></span>
                     </div>
-                    <button @click.prevent="removeFile(index)" type="button" class="p-1 text-neutral-400 hover:text-red-500 transition-colors">
+                    <button @click.prevent="removeFile(index)" type="button" :aria-label="'Remover '+file.name" class="p-1 text-neutral-400 hover:text-red-500 transition-colors">
                         <x-heroicon-o-x-mark class="w-4 h-4" />
                     </button>
                 </li>
@@ -109,4 +146,4 @@
     </template>
 </div>
 
-<x-error :name="$name" />
+<x-error :name="$name" :id="$name.'-error'" />

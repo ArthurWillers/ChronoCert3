@@ -16,33 +16,42 @@
         default => 'sm:max-w-lg', // md
     };
     $hasIcon = in_array($confirmVariant, ['danger', 'info', 'success', 'warning']);
+    $titleId = 'modal-title-'.md5($name);
 @endphp
 
 <div class="contents"
      x-data="{
          open: false,
+         openModal() {
+             if (this.open) return;
+             this.open = true;
+             this.$nextTick(() => {
+                 this.$refs.dialog.showModal();
+                 document.documentElement.classList.add('t-modal-open');
+             });
+         },
          closeModal() {
              if (! this.open) {
                  return;
              }
 
              this.open = false;
+             this.$refs.dialog.close();
+             document.documentElement.classList.toggle('t-modal-open', !!document.querySelector('dialog[open]'));
              window.dispatchEvent(new CustomEvent('modal-closed', { detail: @js($name) }));
          }
      }"
-     x-effect="document.documentElement.classList.toggle('t-modal-open', open)"
-     @modal-open.window="if ($event.detail === '{{ $name }}') open = true"
+     @modal-open.window="if ($event.detail === @js($name)) openModal()"
      @modal-close.window="if ($event.detail === '{{ $name }}') closeModal()"
      @keydown.escape.window="closeModal()"
 >
 
     <template x-teleport="body">
-        <div class="t-modal-scroll fixed inset-0 z-50 overflow-y-auto"
-             style="display: none;"
-             aria-labelledby="modal-title" 
+        <dialog x-ref="dialog" class="t-modal-scroll fixed inset-0 z-50 m-0 hidden h-full max-h-none w-full max-w-none overflow-y-auto border-0 bg-transparent p-0 text-neutral-900 open:block"
+             aria-labelledby="{{ $titleId }}"
              role="dialog" 
              aria-modal="true"
-             x-show="open">
+             @cancel.prevent="closeModal()">
             
 
             <div class="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm transition-opacity"
@@ -87,7 +96,7 @@
                                 </div>
                             @endif
                             <div class="{{ $hasIcon ? 'mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left' : '' }} w-full">
-                                <h3 class="text-base font-semibold leading-6 text-neutral-900 {{ $hasIcon ? '' : 'mb-4' }}" id="modal-title">
+                                <h3 class="text-base font-semibold leading-6 text-neutral-900 {{ $hasIcon ? '' : 'mb-4' }}" id="{{ $titleId }}">
                                     {{ $title }}
                                 </h3>
                                 <div class="{{ $hasIcon ? 'mt-2' : '' }}">
@@ -110,7 +119,7 @@
                     
                     @if(!$hideFooter && $hasIcon)
                         <div class="bg-neutral-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                            <div class="sm:ml-3 sm:w-auto" @click="closeModal(); $dispatch('modal-confirm')">
+                            <div class="sm:ml-3 sm:w-auto" @submit="$dispatch('modal-confirm')">
                                 {{ $slot }}
                             </div>
                             <x-button type="button" 
@@ -123,6 +132,6 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </dialog>
     </template>
 </div>

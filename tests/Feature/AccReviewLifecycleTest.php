@@ -162,6 +162,63 @@ test('certificate hours must be positive', function () {
         ->assertSessionHasErrors('certificate_hours');
 });
 
+test('certificate hours accept Portuguese decimals and reject precision that would round to zero', function () {
+    [$submission, $student, $coordinator, $category] = reviewScenario();
+    $review = startReview($this, $submission, $coordinator);
+    reviewActingAs($this, $coordinator)->patch(route('reviews.update', $review), [
+        ...validClassification($category), 'certificate_hours' => '0.001',
+    ])->assertSessionHasErrors('certificate_hours');
+    reviewActingAs($this, $coordinator)->post(route('reviews.complete', $review), [
+        ...validClassification($category), 'decision' => 'approve', 'certificate_hours' => '12,5', 'is_area_related' => false,
+    ])->assertSessionHasNoErrors();
+
+    expect($review->refresh()->certificate_hours)->toBe('12.50')
+        ->and($review->is_area_related)->toBeFalse()
+        ->and($submission->refresh()->status)->toBe(SubmissionStatus::Approved);
+});
+
+test('rejection ignores incomplete or invalid acceptance fields', function () {
+    [$submission, $student, $coordinator] = reviewScenario();
+    $review = startReview($this, $submission, $coordinator);
+    reviewActingAs($this, $coordinator)->post(route('reviews.complete', $review), [
+        'decision' => 'reject', 'certificate_hours' => 'inválido', 'acc_category_id' => 'inválida',
+        'rejection_reason' => 'O arquivo não permite conferir a atividade.',
+    ])->assertSessionHasNoErrors();
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::Rejected);
+});
+
+test('category limit changes preserve recognized hours and do not retroactively recognize old excess', function () {
+    [$first, $student, $coordinator, $category] = reviewScenario();
+    $category->update(['max_hours' => 20]);
+    $firstReview = startAndClassify($this, $first, $coordinator, $category, 30);
+    reviewActingAs($this, $coordinator)->post(route('reviews.approve', $firstReview))->assertSessionHasNoErrors();
+    expect($firstReview->refresh()->rules_snapshot['recognized_hours'])->toBe('20.00');
+
+    $category->update(['max_hours' => 10]);
+    expect(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(20.0);
+    $secondReview = startAndClassify($this, submissionFor($student), $coordinator, $category, 5);
+    reviewActingAs($this, $coordinator)->post(route('reviews.approve', $secondReview))->assertSessionHasNoErrors();
+    expect($secondReview->refresh()->rules_snapshot['recognized_hours'])->toBe('0.00');
+
+    $category->update(['max_hours' => 50]);
+    expect(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(20.0);
+    $thirdReview = startAndClassify($this, submissionFor($student), $coordinator, $category, 5);
+    reviewActingAs($this, $coordinator)->post(route('reviews.approve', $thirdReview))->assertSessionHasNoErrors();
+    $summary = app(BuildStudentAccSummary::class)->execute($student);
+    expect($summary['recognizedHours'])->toBe(25.0)
+        ->and($summary['totalCertificateHours'])->toBe(40.0);
+});
+
+test('area hours show the full recognized amount even above the course minimum', function () {
+    [$submission, $student, $coordinator, $category] = reviewScenario();
+    $student->course->update(['required_acc_hours' => 60, 'minimum_area_percentage' => 50]);
+    $category->update(['max_hours' => 60]);
+    $review = startAndClassify($this, $submission, $coordinator, $category, 45);
+    reviewActingAs($this, $coordinator)->post(route('reviews.approve', $review))->assertSessionHasNoErrors();
+    $summary = app(BuildStudentAccSummary::class)->execute($student);
+    expect($summary['recognizedAreaHours'])->toBe(45.0)->and($summary['minimumAreaHours'])->toBe(30.0);
+});
+
 test('all certificate hours are accepted even when the category total exceeds its limit', function () {
     $course = Course::factory()->create();
     $student = Affiliation::factory()->student()->for($course)->create();

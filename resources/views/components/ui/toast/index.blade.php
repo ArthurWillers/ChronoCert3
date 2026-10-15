@@ -43,20 +43,26 @@
                     clearTimeout(this.timer);
                     clearInterval(this.interval);
                     this.progress = 100;
+                    if (this.type === 'error' || this.type === 'warning') return;
                     this.interval = setInterval(() => {
-                        this.progress -= 2;
+                        this.progress -= 1;
                         if (this.progress <= 0) {
                             clearInterval(this.interval);
                         }
-                    }, 50);
-                    this.timer = setTimeout(() => this.show = false, 2500);
+                    }, 60);
+                    this.timer = setTimeout(() => this.show = false, 6000);
+                },
+                pause() {
+                    clearTimeout(this.timer);
+                    clearInterval(this.interval);
                 },
                 close() {
                     clearTimeout(this.timer);
                     clearInterval(this.interval);
                     this.show = false;
                 }
-            }" x-show="show" x-cloak
+            }" x-show="show" x-cloak role="status" aria-live="polite" aria-atomic="true"
+            @mouseenter="pause()" @mouseleave="startTimer()" @focusin="pause()" @focusout="startTimer()"
             x-transition:enter="transition motion-ease-smooth-out motion-duration-medium transform"
             x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100"
             x-transition:leave="transition motion-ease-smooth-out motion-duration-fast transform is-leaving"
@@ -78,13 +84,13 @@
                 </div>
                 {{-- Mensagem e Botão de Fechar --}}
                 <div class="flex-1" x-text="message"></div>
-                <button class="cursor-pointer shrink-0" @click="close()">
+                <button type="button" aria-label="Fechar mensagem" class="cursor-pointer shrink-0" @click="close()">
                     <x-heroicon-o-x-mark class="size-6" />
                 </button>
             </div>
 
             {{-- Barra de Progresso --}}
-            <div class="w-full bg-neutral-200 h-1">
+            <div class="w-full bg-neutral-200 h-1" x-show="type !== 'error' && type !== 'warning'" aria-hidden="true">
                 <div class="h-1" :class="{
                     'bg-green-600': type === 'success',
                     'bg-red-600': type === 'error',

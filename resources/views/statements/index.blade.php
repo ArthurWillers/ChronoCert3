@@ -54,7 +54,7 @@
             </x-card>
 
             <x-callout color="neutral" title="Como ler este resumo">
-                A carga horária anotada no certificado é mantida no documento. Quando uma categoria atinge o próprio limite, somente o excedente deixa de contar naquela categoria.
+                A carga horária do certificado é preservada. Cada aprovação registra as horas reconhecidas conforme o limite vigente na decisão. Alterações posteriores não reduzem as horas já reconhecidas.
             </x-callout>
 
             <x-card class="!p-0">
@@ -70,9 +70,12 @@
                                     <h3 class="font-semibold text-neutral-900">{{ $summary['category']->name }}</h3>
                                     <p class="mt-1 text-sm text-neutral-500">{{ $summary['accepted_documents_count'] }} {{ $summary['accepted_documents_count'] === 1 ? 'documento aceito' : 'documentos aceitos' }}</p>
                                 </div>
-                                <p class="text-sm font-semibold text-neutral-800">{{ number_format($summary['recognized_hours'], 2, ',', '.') }} h <span class="font-normal text-neutral-500">de {{ number_format((float) $summary['category']->max_hours, 2, ',', '.') }} h</span></p>
+                                <p class="text-sm font-semibold text-neutral-800">{{ number_format($summary['recognized_hours'], 2, ',', '.') }} h reconhecidas <span class="font-normal text-neutral-500">· limite atual {{ number_format((float) $summary['category']->max_hours, 2, ',', '.') }} h</span></p>
                             </div>
-                            <x-progress class="mt-4" :value="$summary['recognized_hours']" :max="$summary['category']->max_hours" :show-value="false" />
+                            <x-progress class="mt-4" :value="$summary['recognized_hours']" :max="max((float) $summary['category']->max_hours, $summary['recognized_hours'])" :show-value="false" />
+                            @if ($summary['recognized_hours'] > (float) $summary['category']->max_hours)
+                                <p class="mt-2 text-sm text-accent">As horas acima do limite atual foram preservadas pelas regras de aprovações anteriores.</p>
+                            @endif
                             <p class="mt-3 text-sm text-neutral-600">
                                 Certificados aceitos: {{ number_format($summary['certificate_hours'], 2, ',', '.') }} h.
                             </p>
@@ -119,6 +122,7 @@
                     @endforelse
                 </div>
             </x-card>
+            {{ $history->links() }}
         @else
             <x-card class="!p-0">
                 <div class="flex flex-col gap-3 border-b border-neutral-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -145,6 +149,7 @@
                     @endforelse
                 </div>
             </x-card>
+            {{ $students->links() }}
         @endif
     </div>
 </x-layouts.app>

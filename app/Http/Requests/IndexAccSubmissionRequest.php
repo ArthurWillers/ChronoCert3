@@ -27,7 +27,7 @@ class IndexAccSubmissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['nullable', 'string', Rule::in(SubmissionStatus::values())],
+            'status' => ['nullable', 'string', Rule::in(['pending', ...SubmissionStatus::values()])],
             'acc_category_id' => ['nullable', 'integer', Rule::exists(AccCategory::class, 'id')],
         ];
     }

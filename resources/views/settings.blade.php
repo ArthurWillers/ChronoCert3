@@ -17,6 +17,7 @@
                     <x-form-input name="name" type="text" label="Nome" class="w-full" :value="auth()->user()->name" bag="updateProfileInformation" disabled help="O nome da conta não pode ser alterado por esta tela." />
                     <x-form-input name="email" type="email" label="E-mail de login" class="w-full" :value="auth()->user()->email" bag="updateProfileInformation" required autocomplete="email" />
                     <x-form-input name="cpf" type="text" label="CPF" class="w-full" :value="auth()->user()->cpf" disabled help="O CPF é o identificador único da sua conta e não pode ser alterado aqui." />
+                    <x-form-input name="current_password" id="profile_current_password" type="password" label="Confirme sua senha atual" bag="updateProfileInformation" required viewable autocomplete="current-password" help="Sua senha é necessária para alterar o e-mail de login. As outras sessões serão encerradas." />
                 </div>
 
                 <div class="flex items-center gap-4">

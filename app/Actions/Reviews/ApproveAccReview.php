@@ -3,6 +3,7 @@
 namespace App\Actions\Reviews;
 
 use App\Actions\Audit\RecordActivity;
+use App\Actions\Statements\BuildAccCategoryTotals;
 use App\Enums\AuditEvent;
 use App\Enums\SubmissionStatus;
 use App\Models\AccCategory;
@@ -18,7 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 class ApproveAccReview
 {
-    public function __construct(private RecordActivity $recordActivity) {}
+    public function __construct(
+        private RecordActivity $recordActivity,
+        private BuildAccCategoryTotals $buildAccCategoryTotals,
+    ) {}
 
     public function execute(AccReview $review, Affiliation $reviewerAffiliation, User $causer): AccReview
     {
@@ -44,6 +48,12 @@ class ApproveAccReview
                 ]);
             }
 
+            if ((float) $review->certificate_hours <= 0) {
+                throw ValidationException::withMessages([
+                    'certificate_hours' => 'A carga horária do certificado deve ser maior que zero.',
+                ]);
+            }
+
             $category = AccCategory::query()->with('course')->lockForUpdate()->findOrFail($review->acc_category_id);
 
             if ($category->deactivated_at !== null
@@ -56,6 +66,11 @@ class ApproveAccReview
 
             $categoryLimit = (float) $category->max_hours;
             $certificateHours = (float) $review->certificate_hours;
+            $alreadyRecognized = $this->buildAccCategoryTotals->recognizedHoursForCategory($studentAffiliation->getKey(), $category->getKey());
+            $recognizedHundredths = min(
+                (int) round($certificateHours * 100),
+                max(0, (int) round($categoryLimit * 100) - (int) round($alreadyRecognized * 100)),
+            );
 
             $completedAt = now();
             $review->update([
@@ -64,6 +79,7 @@ class ApproveAccReview
                 'rules_snapshot' => [
                     'category_max_hours' => number_format($categoryLimit, 2, '.', ''),
                     'certificate_hours' => number_format($certificateHours, 2, '.', ''),
+                    'recognized_hours' => number_format($recognizedHundredths / 100, 2, '.', ''),
                     'is_area_related' => $review->is_area_related,
                 ],
                 'rejection_reason' => null,

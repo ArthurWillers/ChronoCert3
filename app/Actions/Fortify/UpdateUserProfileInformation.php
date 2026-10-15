@@ -17,6 +17,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     public function __construct(
         private RecordActivity $recordActivity,
         private ActiveAffiliationContext $activeAffiliationContext,
+        private InvalidateUserSessions $invalidateUserSessions,
     ) {}
 
     /**
@@ -29,6 +30,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     public function update(User $user, array $input): void
     {
         Validator::make($input, [
+            'current_password' => ['required', 'string', 'current_password:web'],
             'email' => [
                 'required',
                 'string',
@@ -49,6 +51,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             $user->forceFill([
                 'email' => $input['email'],
             ])->save();
+            $this->invalidateUserSessions->execute($user, keepCurrentSession: true);
 
             $this->recordActivity->execute(
                 event: AuditEvent::UserLoginEmailChanged,

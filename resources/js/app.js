@@ -2,6 +2,24 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
+Alpine.data('accReviewDecision', (categoryImpact, categoryId, certificateHours) => ({
+    categoryImpact,
+    categoryId: String(categoryId ?? ''),
+    certificateHours: String(certificateHours ?? ''),
+    loading: false,
+    get category() { return this.categoryImpact[this.categoryId] ?? null; },
+    get hours() {
+        const value = Number(this.certificateHours.replace(',', '.'));
+        return Number.isFinite(value) && value > 0 ? value : 0;
+    },
+    get additionalHours() {
+        if (!this.category) return 0;
+        const remaining = Math.max(0, Math.round(this.category.limit * 100) - Math.round(this.category.recognized * 100));
+        return Math.min(Math.round(this.hours * 100), remaining) / 100;
+    },
+    formatHours(value) { return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value); },
+}));
+
 Alpine.start();
 
 document.querySelectorAll('[data-existing-user-lookup]').forEach((input) => {

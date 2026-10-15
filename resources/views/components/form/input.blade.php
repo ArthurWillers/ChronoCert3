@@ -1,5 +1,6 @@
 @props([
     'name' => '',
+    'id' => null,
     'type' => 'text',
     'value' => '',
     'placeholder' => '',
@@ -12,6 +13,7 @@
 ])
 
 @php
+    $inputId = $id ?? $name;
     $baseClasses = 'h-11 w-full border appearance-none text-sm rounded-xl block py-2.5 px-4 bg-white disabled:shadow-none shadow-xs focus:shadow-lg text-neutral-700 disabled:text-neutral-400 placeholder-neutral-400 disabled:placeholder-neutral-400/70 outline-none focus:border-accent focus:ring-2 focus:ring-accent/40 transition-colors duration-300';
     $isError = $hasError || ($name && $errors->getBag($bag)->has($name));
     $errorClasses = $isError
@@ -71,13 +73,14 @@
     @endif>
 
     @if ($currency)
-        <input type="hidden" @if ($name) id="{{ $name }}" name="{{ $name }}" @endif {{ $attributes->filter(fn($v, $k) => in_array($k, [':name', '::name', 'x-bind:name'])) }} x-model="rawValue">
-        <input type="text" inputmode="numeric" x-ref="display" @input="updateValue($event)" placeholder="{{ $placeholder }}" {{ $attributes->whereDoesntStartWith('x-model')->filter(fn($v, $k) => !in_array($k, [':name', '::name', 'x-bind:name']))->merge(['class' => $classes]) }} />
+        <input type="hidden" @if ($name) name="{{ $name }}" @endif {{ $attributes->filter(fn($v, $k) => in_array($k, [':name', '::name', 'x-bind:name'])) }} x-model="rawValue">
+        <input id="{{ $inputId }}" type="text" inputmode="numeric" x-ref="display" @input="updateValue($event)" placeholder="{{ $placeholder }}" {{ $attributes->whereDoesntStartWith('x-model')->filter(fn($v, $k) => !in_array($k, [':name', '::name', 'x-bind:name']))->merge(['class' => $classes]) }} />
     @else
         <input
             @if ($viewable) :type="show ? 'text' : 'password'"
             @else type="{{ $numeric ? 'text' : $type }}" @endif
-            @if ($name) id="{{ $name }}" name="{{ $name }}" @endif
+            @if ($inputId) id="{{ $inputId }}" @endif
+            @if ($name) name="{{ $name }}" @endif
             placeholder="{{ $placeholder }}"
             value="{{ $value }}" {{ $attributes->merge(['class' => $classes]) }}
             @if ($numeric) x-data

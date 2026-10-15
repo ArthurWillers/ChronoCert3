@@ -46,6 +46,7 @@
             </x-filter-bar.select>
             <x-filter-bar.select name="status" aria-label="Situação do documento">
                 <option value="">Todas as situações</option>
+                <option value="pending" @selected(request('status') === 'pending')>Aguardando análise ou decisão</option>
                 @foreach (\App\Enums\SubmissionStatus::cases() as $status)
                     <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
                 @endforeach
@@ -56,7 +57,7 @@
             <x-table.header class="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_160px_130px] whitespace-nowrap sm:grid lg:[&>div]:px-5">
                 <x-table.column>DOCUMENTO</x-table.column>
                 <x-table.column>CATEGORIA</x-table.column>
-                <x-table.column align="right">CARGA HORÁRIA</x-table.column>
+                <x-table.column align="right">CERTIFICADO (h)</x-table.column>
                 <x-table.column align="right">SITUAÇÃO</x-table.column>
             </x-table.header>
             <div class="divide-y divide-neutral-100">

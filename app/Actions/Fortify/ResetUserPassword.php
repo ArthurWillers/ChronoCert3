@@ -15,7 +15,10 @@ class ResetUserPassword implements ResetsUserPasswords
 {
     use PasswordValidationRules;
 
-    public function __construct(private RecordActivity $recordActivity) {}
+    public function __construct(
+        private RecordActivity $recordActivity,
+        private InvalidateUserSessions $invalidateUserSessions,
+    ) {}
 
     /**
      * Validate and reset the user's forgotten password.
@@ -34,6 +37,7 @@ class ResetUserPassword implements ResetsUserPasswords
             $user->forceFill([
                 'password' => Hash::make($input['password']),
             ])->save();
+            $this->invalidateUserSessions->execute($user);
 
             $this->recordActivity->execute(
                 event: AuditEvent::UserPasswordChanged,

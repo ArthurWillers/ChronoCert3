@@ -9,7 +9,7 @@
         />
 
         <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <x-card href="{{ route('submissions.index', ['status' => \App\Enums\SubmissionStatus::Submitted->value]) }}" size="sm">
+            <x-card href="{{ route('submissions.index', ['status' => 'pending']) }}" size="sm">
                 <p class="text-sm text-neutral-600">Aguardando análise</p>
                 <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $submissionCounts['submitted'] + $submissionCounts['under_review'] }}</p>
                 <p class="mt-1 text-xs text-neutral-500">Enviados ou em análise</p>
@@ -32,7 +32,7 @@
                         <span class="text-sm font-medium text-neutral-500">de {{ number_format($summary['minimumAreaHours'], 2, ',', '.') }} h</span>
                     @endif
                 </p>
-                <p class="mt-1 text-xs text-neutral-500">{{ $summary['minimumAreaHours'] !== null ? 'Até o mínimo exigido pelo curso' : 'Sem mínimo exigido pelo curso' }}</p>
+                <p class="mt-1 text-xs text-neutral-500">{{ $summary['minimumAreaHours'] !== null ? 'Total reconhecido e mínimo exigido' : 'Sem mínimo exigido pelo curso' }}</p>
             </x-card>
         </div>
 

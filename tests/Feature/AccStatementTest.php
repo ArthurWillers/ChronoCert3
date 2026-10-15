@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Statements\BuildStudentAccSummary;
 use App\Enums\SubmissionStatus;
 use App\Models\AccCategory;
 use App\Models\AccReview;
@@ -9,6 +10,25 @@ use App\Models\Course;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 
 uses(LazilyRefreshDatabase::class);
+
+test('legacy decisions are allocated using their historical snapshots without changing certificates', function () {
+    $student = Affiliation::factory()->student()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($student->course)->create();
+    $category = AccCategory::factory()->for($student->course)->create(['max_hours' => 5]);
+    $submission = statementSubmission($student, SubmissionStatus::Approved);
+    $review = AccReview::factory()->create([
+        'acc_submission_id' => $submission->id, 'reviewer_affiliation_id' => $coordinator->id, 'acc_category_id' => $category->id,
+        'certificate_hours' => 15, 'completed_at' => now(), 'rules_snapshot' => ['category_max_hours' => '20.00'],
+    ]);
+    $migration = require database_path('migrations/2026_10_15_155610_backfill_recognized_hours_for_approved_reviews.php');
+    $migration->up();
+
+    expect($review->refresh()->rules_snapshot['recognized_hours'])->toBe('15.00')
+        ->and($review->certificate_hours)->toBe('15.00');
+    expect(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(15.0);
+    $migration->up();
+    expect($review->refresh()->rules_snapshot['recognized_hours'])->toBe('15.00');
+});
 
 test('the student statement counts only approved submissions and preserves decision snapshots', function () {
     $course = Course::factory()->create();

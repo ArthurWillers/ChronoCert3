@@ -366,8 +366,58 @@ test('submission activities identify the author affiliation, beneficiary, course
 
 function validPdf(string $name = 'comprovante.pdf'): UploadedFile
 {
-    return UploadedFile::fake()->createWithContent($name, "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF");
+    return UploadedFile::fake()->createWithContent($name, "%PDF-1.4\n% ".fake()->uuid()."\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF");
 }
+
+test('repeated uploads reuse the same pending or approved document for the same student', function () {
+    $student = Affiliation::factory()->student()->create();
+    $content = "%PDF-1.4\n% repeated certificate\n%%EOF";
+    foreach (['primeiro.pdf', 'renomeado.pdf'] as $name) {
+        actingAsAffiliation($this, $student)
+            ->post(route('submissions.store'), ['document' => UploadedFile::fake()->createWithContent($name, $content)])
+            ->assertSessionHasNoErrors();
+    }
+
+    expect(AccSubmission::query()->where('student_affiliation_id', $student->id)->count())->toBe(1);
+    $submission = AccSubmission::query()->sole();
+    $submission->update(['status' => SubmissionStatus::Approved]);
+    actingAsAffiliation($this, $student)
+        ->post(route('submissions.store'), ['document' => UploadedFile::fake()->createWithContent('aprovado.pdf', $content)])
+        ->assertRedirect(route('submissions.show', $submission));
+    expect(AccSubmission::query()->count())->toBe(1);
+});
+
+test('the same file may be submitted again after rejection', function () {
+    $student = Affiliation::factory()->student()->create();
+    $content = "%PDF-1.4\n% new attempt\n%%EOF";
+    actingAsAffiliation($this, $student)->post(route('submissions.store'), ['document' => UploadedFile::fake()->createWithContent('comprovante.pdf', $content)]);
+    AccSubmission::query()->sole()->update(['status' => SubmissionStatus::Rejected]);
+    actingAsAffiliation($this, $student)->post(route('submissions.store'), ['document' => UploadedFile::fake()->createWithContent('comprovante.pdf', $content)])
+        ->assertSessionHasNoErrors();
+    expect(AccSubmission::query()->count())->toBe(2);
+});
+
+test('coordinator retries reuse the document and its existing review', function () {
+    $student = Affiliation::factory()->student()->create();
+    $coordinator = Affiliation::factory()->coordinator()->for($student->course)->create();
+    $content = "%PDF-1.4\n% coordinator retry\n%%EOF";
+    for ($attempt = 0; $attempt < 2; $attempt++) {
+        actingAsAffiliation($this, $coordinator)->post(route('submissions.students.store', $student), [
+            'document' => UploadedFile::fake()->createWithContent('comprovante.pdf', $content),
+        ])->assertSessionHasNoErrors();
+    }
+    expect(AccSubmission::query()->count())->toBe(1)->and(AccReview::query()->count())->toBe(1);
+});
+
+test('private document responses cannot be stored in caches', function () {
+    $student = Affiliation::factory()->student()->create();
+    $submission = submitProof($this, $student);
+    foreach (['submissions.document', 'submissions.download'] as $route) {
+        actingAsAffiliation($this, $student)->get(route($route, $submission))->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+});
 
 function actingAsAffiliation(TestCase $testCase, Affiliation $affiliation): TestCase
 {

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Actions\Affiliations\ActiveAffiliationContext;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
@@ -32,6 +33,15 @@ class AppServiceProvider extends ServiceProvider
         Blade::anonymousComponentPath(resource_path('views/components/nav'));
 
         View::composer('*', function (ViewInstance $view): void {
+            if (str_ends_with($view->getPath(), 'resources/views/components/layouts/app.blade.php')) {
+                $user = auth()->user();
+                $affiliation = $user === null ? null : app(ActiveAffiliationContext::class)->for($user);
+                $view->with('currentAffiliation', $affiliation?->loadMissing('course'));
+                $view->with('canSwitchAffiliation', $user !== null && $user->affiliations()->valid()->count() > 1);
+
+                return;
+            }
+
             if (! str_ends_with($view->getPath(), 'resources/views/components/layout/sidebar.blade.php')) {
                 return;
             }

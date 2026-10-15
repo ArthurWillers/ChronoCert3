@@ -9,12 +9,12 @@
         />
 
         <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <x-card size="sm">
+            <x-card :href="route('submissions.queue', ['status' => 'submitted'])" size="sm">
                 <p class="text-sm text-neutral-600">Aguardando início</p>
                 <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $submissionCounts['submitted'] }}</p>
                 <p class="mt-1 text-xs text-neutral-500">Documentos enviados</p>
             </x-card>
-            <x-card size="sm">
+            <x-card :href="route('submissions.queue', ['status' => 'under_review'])" size="sm">
                 <p class="text-sm text-neutral-600">Em análise</p>
                 <p class="mt-2 text-2xl font-semibold text-neutral-900">{{ $submissionCounts['under_review'] }}</p>
                 <p class="mt-1 text-xs text-neutral-500">Aguardando decisão</p>
@@ -33,6 +33,10 @@
 
         <x-card>
             <x-section-header title="Próximas análises" icon="heroicon-o-clipboard-document-list" />
+            <div class="mb-4 flex items-center justify-between gap-3 text-sm">
+                <p class="text-neutral-500">Documentos mais antigos aguardando início.</p>
+                <x-link :href="route('submissions.queue')">Ver fila completa</x-link>
+            </div>
             <div class="divide-y divide-neutral-100">
                 @forelse ($pendingSubmissions as $submission)
                     @php

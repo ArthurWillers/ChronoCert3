@@ -22,6 +22,11 @@
                     <x-heroicon-o-document-text /> Documentos
                 </x-nav-link>
             @endcan
+            @can('viewReviewQueue', \App\Models\AccSubmission::class)
+                <x-nav-link :href="route('submissions.queue')" :current="request()->routeIs('submissions.queue', 'submissions.show')">
+                    <x-heroicon-o-clipboard-document-check /> Análises
+                </x-nav-link>
+            @endcan
             @can('viewAny', \App\Models\AccSubmission::class)
                 <x-nav-link :href="route('statements.index')" :current="request()->routeIs('statements.*')">
                     <x-heroicon-o-chart-bar-square /> Extrato de ACC

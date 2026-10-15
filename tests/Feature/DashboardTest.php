@@ -7,8 +7,38 @@ use App\Models\AccSubmission;
 use App\Models\Affiliation;
 use App\Models\Course;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 uses(LazilyRefreshDatabase::class);
+
+test('the review queue is paginated, ordered by oldest and limited to the active course', function () {
+    $coordinator = Affiliation::factory()->coordinator()->create();
+    $student = Affiliation::factory()->student()->for($coordinator->course)->create();
+    $otherStudent = Affiliation::factory()->student()->create();
+    $oldest = AccSubmission::factory()->create([
+        'student_affiliation_id' => $student->id, 'submitted_by_affiliation_id' => $student->id, 'submitted_at' => now()->subMonth(),
+    ]);
+    AccSubmission::factory()->count(24)->create(['student_affiliation_id' => $student->id, 'submitted_by_affiliation_id' => $student->id]);
+    AccSubmission::factory()->create(['student_affiliation_id' => $otherStudent->id, 'submitted_by_affiliation_id' => $otherStudent->id]);
+
+    $this->actingAs($coordinator->user)->withSession(['active_affiliation_id' => $coordinator->id])
+        ->get(route('submissions.queue'))->assertOk()
+        ->assertViewHas('submissions', fn (LengthAwarePaginator $submissions): bool => $submissions->total() === 25 && $submissions->count() === 20 && $submissions->first()->is($oldest))
+        ->assertDontSeeText($otherStudent->user->name);
+
+    $this->actingAs($student->user)->withSession(['active_affiliation_id' => $student->id])
+        ->get(route('submissions.queue'))->assertForbidden();
+});
+
+test('the student pending filter includes documents awaiting a start and awaiting a decision', function () {
+    $student = Affiliation::factory()->student()->create();
+    foreach ([SubmissionStatus::Submitted, SubmissionStatus::UnderReview, SubmissionStatus::Approved] as $status) {
+        AccSubmission::factory()->create(['student_affiliation_id' => $student->id, 'submitted_by_affiliation_id' => $student->id, 'status' => $status]);
+    }
+    $this->actingAs($student->user)->withSession(['active_affiliation_id' => $student->id])
+        ->get(route('submissions.index', ['status' => 'pending']))->assertOk()
+        ->assertViewHas('submissions', fn (LengthAwarePaginator $submissions): bool => $submissions->total() === 2);
+});
 
 test('the coordinator dashboard shows only actionable statistics from the active course', function () {
     $course = Course::factory()->create();

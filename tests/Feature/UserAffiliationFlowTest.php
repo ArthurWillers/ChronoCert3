@@ -6,6 +6,34 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 
 uses(LazilyRefreshDatabase::class);
 
+test('a coordinator cannot move their own affiliation to another course through a crafted request', function () {
+    $coordinator = Affiliation::factory()->coordinator()->create();
+    $otherCourse = Course::factory()->create();
+    $originalCourseId = $coordinator->course_id;
+
+    $this->actingAs($coordinator->user)->withSession(['active_affiliation_id' => $coordinator->id])
+        ->put(route('users.affiliations.update', [$coordinator->user, $coordinator]), [
+            'operational_email' => $coordinator->email,
+            'course_id' => $otherCourse->id,
+        ])->assertSessionHasErrors('course_id');
+
+    expect($coordinator->refresh()->course_id)->toBe($originalCourseId);
+});
+
+test('an administrator can move a coordinator to another active course', function () {
+    $administrator = Affiliation::factory()->administrator()->create();
+    $coordinator = Affiliation::factory()->coordinator()->create();
+    $otherCourse = Course::factory()->create();
+
+    $this->actingAs($administrator->user)->withSession(['active_affiliation_id' => $administrator->id])
+        ->put(route('users.affiliations.update', [$coordinator->user, $coordinator]), [
+            'operational_email' => $coordinator->email,
+            'course_id' => $otherCourse->id,
+        ])->assertSessionHasNoErrors();
+
+    expect($coordinator->refresh()->course_id)->toBe($otherCourse->id);
+});
+
 test('a coordinator finds an existing user by CPF before creating a student affiliation', function () {
     $course = Course::factory()->create();
     $coordinator = Affiliation::factory()->coordinator()->for($course)->create();

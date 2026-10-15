@@ -9,6 +9,7 @@ use App\Models\Affiliation;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class UpdateAffiliation
@@ -27,6 +28,16 @@ class UpdateAffiliation
                 ->with(['user', 'course'])
                 ->lockForUpdate()
                 ->findOrFail($affiliation->getKey());
+            Gate::forUser($causer)->authorize('update', $affiliation);
+
+            if ($affiliation->type === AffiliationType::Coordinator
+                && (int) $data['course_id'] !== (int) $affiliation->course_id
+                && ($activeAffiliation->type !== AffiliationType::Administrator || $activeAffiliation->course_id !== null)) {
+                throw ValidationException::withMessages([
+                    'course_id' => 'Somente a administração pode alterar o curso de um vínculo de coordenação.',
+                ]);
+            }
+
             $previousCourse = $affiliation->course;
             $newCourse = $affiliation->type === AffiliationType::Coordinator
                 ? (

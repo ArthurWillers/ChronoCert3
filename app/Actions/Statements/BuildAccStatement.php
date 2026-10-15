@@ -3,16 +3,16 @@
 namespace App\Actions\Statements;
 
 use App\Enums\AffiliationType;
-use App\Enums\SubmissionStatus;
-use App\Models\AccReview;
 use App\Models\AccSubmission;
 use App\Models\Affiliation;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
 
 class BuildAccStatement
 {
-    public function __construct(private BuildStudentAccSummary $buildStudentAccSummary) {}
+    public function __construct(
+        private BuildStudentAccSummary $buildStudentAccSummary,
+        private BuildAccCategoryTotals $buildAccCategoryTotals,
+    ) {}
 
     /** @return array<string, mixed> */
     public function execute(Affiliation $affiliation): array
@@ -35,7 +35,8 @@ class BuildAccStatement
             ->whereBelongsTo($studentAffiliation, 'studentAffiliation')
             ->with(['review.category', 'media'])
             ->latest('submitted_at')
-            ->get();
+            ->latest('id')
+            ->paginate(20);
         $summary = $this->buildStudentAccSummary->execute($studentAffiliation);
 
         return [
@@ -53,36 +54,21 @@ class BuildAccStatement
             ->active()
             ->where('type', AffiliationType::Student)
             ->where('course_id', $coordinatorAffiliation->course_id)
-            ->with([
-                'user:id,name',
-                'submissionsAsStudent' => fn (HasMany $query): HasMany => $query
-                    ->where('status', SubmissionStatus::Approved)
-                    ->with('review.category'),
-            ])
+            ->with('user:id,name')
             ->orderBy('registration_number')
-            ->get()
-            ->map(function (Affiliation $student): array {
-                $certificateHours = $student->submissionsAsStudent
-                    ->pluck('review')
-                    ->filter(fn (mixed $review): bool => $review instanceof AccReview)
-                    ->groupBy('acc_category_id')
-                    ->sum(function ($reviews): float {
-                        $category = $reviews->first()?->category;
-
-                        return min(
-                            (float) $reviews->sum(fn (AccReview $review): float => (float) $review->certificate_hours),
-                            (float) $category?->max_hours,
-                        );
-                    });
-
-                return ['affiliation' => $student, 'certificate_hours' => $certificateHours];
-            });
+            ->orderBy('id')
+            ->paginate(20);
+        $totals = $this->buildAccCategoryTotals->forStudents($students->getCollection()->modelKeys())->groupBy('student_affiliation_id');
+        $students->through(fn (Affiliation $student): array => [
+            'affiliation' => $student,
+            'certificate_hours' => (float) $totals->get($student->getKey(), collect())->sum('recognized_hours'),
+        ]);
 
         return [
             'mode' => 'coordinator',
             'affiliation' => $coordinatorAffiliation->loadMissing('course'),
             'students' => $students,
-            'totalCertificateHours' => $students->sum('certificate_hours'),
+            'totalCertificateHours' => $this->buildAccCategoryTotals->totalForCourse($coordinatorAffiliation->course_id),
         ];
     }
 }

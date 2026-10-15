@@ -9,20 +9,24 @@
 @endphp
 
 <x-layouts.app>
-    <div class="mx-auto max-w-4xl space-y-6">
+    <div class="mx-auto space-y-6 {{ $isCoordinator ? 'max-w-7xl' : 'max-w-4xl' }}">
         <x-page-header
             title="Documento de ACC"
             :description="'Enviado em '.$submission->submitted_at->format('d/m/Y H:i').' · origem '.$submission->origin->label()"
         >
             <x-back-button :fallback="$isCoordinator
-                ? route('submissions.students.index', $submission->studentAffiliation)
+                ? route('submissions.queue')
                 : route('submissions.index')" />
+            @if ($nextSubmission !== null)
+                <x-button :href="route('submissions.show', $nextSubmission)" color="accent">Próxima análise <x-heroicon-o-arrow-right /></x-button>
+            @endif
         </x-page-header>
 
-        <x-card>
+        <div class="grid items-start gap-6 {{ $isCoordinator ? 'lg:grid-cols-2' : '' }}">
+        <x-card :class="$isCoordinator ? 'lg:sticky lg:top-24' : ''">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div class="min-w-0">
-                    <p class="truncate text-lg font-semibold text-neutral-900">{{ $media?->getCustomProperty('original_filename') ?? 'Documento sem arquivo' }}</p>
+                    <p class="break-words text-lg font-semibold text-neutral-900">{{ $media?->getCustomProperty('original_filename') ?? 'Documento sem arquivo' }}</p>
                     <p class="mt-2 text-sm text-neutral-600">Beneficiário: {{ $submission->studentAffiliation->user->name }} · Matrícula {{ $submission->studentAffiliation->registration_number }}</p>
                     <p class="mt-1 text-sm text-neutral-600">Enviado por: {{ $submission->submittedByAffiliation->user->name }}</p>
                 </div>
@@ -30,22 +34,28 @@
             </div>
 
             @if ($media !== null)
-                <dl class="mt-6 grid grid-cols-1 gap-4 border-t border-neutral-200 pt-6 sm:grid-cols-3">
+                <dl class="mt-6 grid grid-cols-2 gap-4 border-t border-neutral-200 pt-6">
                     <div>
                         <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Formato</dt>
-                        <dd class="mt-1 text-sm text-neutral-800">{{ $media->mime_type }}</dd>
+                        <dd class="mt-1 text-sm text-neutral-800">{{ \App\Models\AccSubmission::acceptedFileTypes()[$media->mime_type]['label'] ?? 'Documento' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Tamanho</dt>
-                        <dd class="mt-1 text-sm text-neutral-800">{{ number_format($media->size / 1024 / 1024, 2, ',', '.') }} MB</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Armazenamento</dt>
-                        <dd class="mt-1 text-sm text-neutral-800">Privado</dd>
+                        <dd class="mt-1 text-sm text-neutral-800">{{ $media->size < 1024 * 1024 ? number_format($media->size / 1024, 1, ',', '.').' KB' : number_format($media->size / 1024 / 1024, 2, ',', '.').' MB' }}</dd>
                     </div>
                 </dl>
 
-                <x-ui.lightbox class="mt-6 flex flex-wrap gap-3">
+                @if ($isCoordinator)
+                    <div class="mt-5 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+                        @if (str_starts_with($media->mime_type, 'image/'))
+                            <img src="{{ route('submissions.document', $submission) }}" alt="Comprovante de {{ $submission->studentAffiliation->user->name }}" class="max-h-[65vh] min-h-64 w-full object-scale-down" />
+                        @else
+                            <iframe src="{{ route('submissions.document', $submission) }}" title="Comprovante de ACC de {{ $submission->studentAffiliation->user->name }}" class="h-[65vh] min-h-96 w-full"></iframe>
+                        @endif
+                    </div>
+                @endif
+
+                <x-lightbox class="mt-6 flex flex-wrap gap-3">
                     @if (str_starts_with($media->mime_type, 'image/'))
                         <button
                             type="button"
@@ -62,13 +72,14 @@
                     <a href="{{ route('submissions.download', $submission) }}" class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent/90">
                         <x-heroicon-o-arrow-down-tray class="size-5" /> Baixar arquivo
                     </a>
-                </x-ui.lightbox>
+                </x-lightbox>
             @endif
         </x-card>
 
+        <div class="space-y-6">
         @if ($errors->any())
             <x-callout color="red" title="Não foi possível concluir a operação">
-                Revise os campos indicados e tente novamente.
+                @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
             </x-callout>
         @endif
 
@@ -96,31 +107,31 @@
                         action="{{ route('reviews.complete', $review) }}"
                         class="mt-6 space-y-5"
                         aria-label="Decisão acadêmica do documento"
-                        x-data="{ decision: @js(old('decision', 'approve')) }"
+                        x-data="accReviewDecision(@js($categoryImpact), @js(old('acc_category_id', $review->acc_category_id)), @js(old('certificate_hours', $review->certificate_hours)))"
+                        @submit="if (loading) { $event.preventDefault(); return; } loading = true"
                     >
                         @csrf
-                        <input type="hidden" name="decision" x-model="decision" />
+                        <input type="hidden" name="decision" value="approve" />
 
                         <div>
                             <h3 class="font-semibold text-neutral-900">Dados para aceitação</h3>
                             <p class="mt-1 text-sm leading-6 text-neutral-600">Ao aceitar, a classificação e a decisão são concluídas juntas.</p>
                         </div>
-                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                            <x-form-input name="original_title" label="Título identificado no documento" :value="$review->original_title" x-bind:required="decision === 'approve'" maxlength="255" />
-                            <x-form-input name="normalized_title" label="Título acadêmico corrigido" :value="$review->normalized_title" x-bind:required="decision === 'approve'" maxlength="255" />
-                            <x-form-input name="certificate_hours" label="Carga horária do certificado" :value="$review->certificate_hours" x-bind:required="decision === 'approve'" inputmode="decimal" help="A carga horária declarada será aceita integralmente." />
+                        <div class="space-y-5">
+                            <x-form-input name="original_title" label="Título identificado no documento" :value="$review->original_title" required maxlength="255" />
+                            <x-form-input name="normalized_title" label="Título acadêmico corrigido" :value="$review->normalized_title" required maxlength="255" />
+                            <x-form-input name="certificate_hours" label="Carga horária do certificado" :value="$review->certificate_hours" required inputmode="decimal" x-model="certificateHours" help="Informe horas decimais, por exemplo 12,5 para 12 horas e 30 minutos." />
                         </div>
 
                         <x-form-checkbox
                             name="is_area_related"
                             value="1"
                             :checked="old('is_area_related', $review->is_area_related)"
-                            x-bind:required="decision === 'approve'"
                         >
                             Atividade relacionada à área de formação do curso
                         </x-form-checkbox>
 
-                        <x-form-select name="acc_category_id" label="Categoria aplicada" x-bind:required="decision === 'approve'">
+                        <x-form-select name="acc_category_id" label="Categoria aplicada" required x-model="categoryId">
                             <option value="">Selecione uma categoria</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->getKey() }}" @selected((string) old('acc_category_id', $review->acc_category_id) === (string) $category->getKey())>
@@ -129,24 +140,39 @@
                             @endforeach
                         </x-form-select>
 
+                        <div x-show="category" x-cloak class="rounded-lg border border-accent/20 bg-accent/5 p-4 text-sm" aria-live="polite">
+                            <p class="font-semibold text-neutral-900">Impacto da aceitação</p>
+                            <p class="mt-2 text-neutral-600">Já reconhecido nesta categoria: <span x-text="formatHours(category?.recognized ?? 0)"></span> h.</p>
+                            <p class="mt-1 font-semibold text-accent">Este documento acrescentará <span x-text="formatHours(additionalHours)"></span> h ao total reconhecido.</p>
+                            <p class="mt-2 text-neutral-600" x-show="hours > additionalHours">A carga do certificado será preservada. O excedente de <span x-text="formatHours(Math.max(0, hours - additionalHours))"></span> h não será contabilizado devido ao limite da categoria.</p>
+                        </div>
+
                         <div class="border-t border-neutral-200 pt-5">
-                            <x-form-textarea
-                                name="rejection_reason"
-                                label="Motivo da rejeição"
-                                help="Preencha apenas se for rejeitar o documento."
-                                x-bind:required="decision === 'reject'"
-                                maxlength="2000"
-                            />
-                            <div class="mt-5 flex flex-wrap justify-end gap-3">
-                                <x-button type="submit" color="danger-outline" @click="decision = 'reject'">
+                            <div class="flex flex-wrap justify-end gap-3">
+                                <x-button type="button" color="danger-outline" @click="$dispatch('modal-open', 'reject-review-{{ $review->id }}')">
                                     <x-heroicon-o-x-circle /> Rejeitar documento
                                 </x-button>
-                                <x-button type="submit" variant="primary" @click="decision = 'approve'">
+                                <x-button type="submit" variant="primary">
                                     <x-heroicon-o-check-circle /> Aceitar documento
                                 </x-button>
                             </div>
                         </div>
                     </form>
+                    <div x-data x-init="@if ($errors->has('rejection_reason')) $nextTick(() => $dispatch('modal-open', 'reject-review-{{ $review->id }}')) @endif">
+                        <x-modal name="reject-review-{{ $review->id }}" title="Rejeitar documento" confirm-variant="warning" hide-footer>
+                            <x-slot:content>
+                                <p>Explique o que impede a aceitação. O discente poderá enviar outro documento e terá 30 dias para consultar este arquivo.</p>
+                                <form method="POST" action="{{ route('reviews.reject', $review) }}" class="mt-5 space-y-4" x-data="{ loading: false }" @submit="loading = true">
+                                    @csrf
+                                    <x-form-textarea name="rejection_reason" label="Motivo da rejeição" required minlength="5" maxlength="2000" />
+                                    <div class="flex justify-end gap-3">
+                                        <x-button type="button" color="outline" @click="$dispatch('modal-close', 'reject-review-{{ $review->id }}')">Cancelar</x-button>
+                                        <x-button type="submit" color="red">Confirmar rejeição</x-button>
+                                    </div>
+                                </form>
+                            </x-slot:content>
+                        </x-modal>
+                    </div>
                 @else
                     <dl class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div>
@@ -165,6 +191,12 @@
                             <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Atividade na área</dt>
                             <dd class="mt-1 text-sm text-neutral-900">{{ $review->is_area_related ? 'Sim' : 'Não' }}</dd>
                         </div>
+                        @if (data_get($review->rules_snapshot, 'recognized_hours') !== null)
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Horas reconhecidas nesta aprovação</dt>
+                                <dd class="mt-1 text-sm text-neutral-900">{{ number_format((float) data_get($review->rules_snapshot, 'recognized_hours'), 2, ',', '.') }} h</dd>
+                            </div>
+                        @endif
                         <div>
                             <dt class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Responsável</dt>
                             <dd class="mt-1 text-sm text-neutral-900">{{ $review->reviewerAffiliation->user->name }}</dd>
@@ -183,5 +215,7 @@
                 @endif
             </x-card>
         @endif
+        </div>
+        </div>
     </div>
 </x-layouts.app>
