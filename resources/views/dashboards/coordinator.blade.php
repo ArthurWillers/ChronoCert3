@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <x-page-header
             title="Visão da coordenação"
             description="Comece pelas pendências do curso e acompanhe a operação em um só lugar."

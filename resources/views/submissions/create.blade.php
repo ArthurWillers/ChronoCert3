@@ -7,7 +7,7 @@
 @endphp
 
 <x-layouts.app>
-    <div class="mx-auto max-w-3xl space-y-6">
+    <div class="mx-auto w-full max-w-4xl space-y-6">
         <x-page-header
             :title="$isCoordinatorSubmission ? 'Registrar documento para discente' : 'Enviar documento de ACC'"
             :description="$isCoordinatorSubmission

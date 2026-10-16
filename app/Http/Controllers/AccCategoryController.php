@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Affiliations\ActiveAffiliationContext;
-use App\Actions\Categories\CategoryDependencies;
 use App\Actions\Categories\ChangeCategoryStatus;
 use App\Actions\Categories\CreateCategory;
 use App\Actions\Categories\DeleteCategory;
@@ -28,7 +27,6 @@ class AccCategoryController extends Controller
         private UpdateCategory $updateCategory,
         private ChangeCategoryStatus $changeCategoryStatus,
         private DeleteCategory $deleteCategory,
-        private CategoryDependencies $dependencies,
     ) {}
 
     public function index(IndexAccCategoryRequest $request): View
@@ -44,6 +42,7 @@ class AccCategoryController extends Controller
             })
             ->when($request->input('status') === 'active', fn (Builder $query): Builder => $query->active())
             ->when($request->input('status') === 'inactive', fn (Builder $query): Builder => $query->whereNotNull('deactivated_at'))
+            ->withCount('reviews')
             ->orderByRaw('deactivated_at IS NULL DESC')->orderBy('name')->orderBy('id')
             ->paginate(20)->withQueryString();
         $canCreate = $request->user()->can('create', [AccCategory::class, $course]);
@@ -67,16 +66,7 @@ class AccCategoryController extends Controller
             $request->user(), $this->activeAffiliation($request),
         );
 
-        return redirect()->route('categories.show', $category)->with('success', 'Categoria criada com sucesso.');
-    }
-
-    public function show(Request $request, AccCategory $category): View
-    {
-        $category->load('course');
-        $this->authorize('view', $category);
-        $canDelete = $request->user()->can('delete', $category) && $this->dependencies->execute($category) === [];
-
-        return view('categories.show', compact('category', 'canDelete'));
+        return redirect()->route('categories.index')->with('success', 'Categoria criada com sucesso.');
     }
 
     public function edit(Request $request, AccCategory $category): View
@@ -91,14 +81,14 @@ class AccCategoryController extends Controller
     {
         $this->updateCategory->execute($category, $request->validated(), $request->user(), $this->activeAffiliation($request));
 
-        return redirect()->route('categories.show', $category)->with('success', 'Categoria atualizada com sucesso.');
+        return redirect()->route('categories.index')->with('success', 'Categoria atualizada com sucesso.');
     }
 
     public function deactivate(DeactivateAccCategoryRequest $request, AccCategory $category): RedirectResponse
     {
         $this->changeCategoryStatus->execute($category, true, $request->user(), $this->activeAffiliation($request), $request->validated('deactivation_reason'));
 
-        return redirect()->route('categories.show', $category)->with('success', 'Categoria inativada para novas análises.');
+        return redirect()->route('categories.index')->with('success', 'Categoria inativada para novas análises.');
     }
 
     public function reactivate(Request $request, AccCategory $category): RedirectResponse
@@ -106,7 +96,7 @@ class AccCategoryController extends Controller
         $this->authorize('reactivate', $category);
         $this->changeCategoryStatus->execute($category, false, $request->user(), $this->activeAffiliation($request));
 
-        return redirect()->route('categories.show', $category)->with('success', 'Categoria reativada com sucesso.');
+        return redirect()->route('categories.index')->with('success', 'Categoria reativada com sucesso.');
     }
 
     public function destroy(Request $request, AccCategory $category): RedirectResponse

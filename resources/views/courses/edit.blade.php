@@ -22,7 +22,7 @@
         @endif
     </x-page-header>
 
-    <div class="mt-6 grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+    <div class="mt-6 grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <x-card>
             <form
                 method="POST"

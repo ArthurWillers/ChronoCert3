@@ -21,7 +21,7 @@
         @endcan
     </x-page-header>
 
-    <div class="mt-5 max-w-4xl">
+    <div class="mt-5 w-full">
         <div class="space-y-6">
             <x-card>
                 <div class="flex items-start justify-between gap-4">
@@ -140,7 +140,7 @@
                                             <p class="mt-1 text-sm text-neutral-500">A carga do certificado é preservada no documento. O total é limitado apenas no cálculo de cada categoria.</p>
                                         </div>
                                         @can('createFor', [\App\Models\AccSubmission::class, $affiliation])
-                                            <x-button :href="route('submissions.students.create', $affiliation)" color="accent">
+                                            <x-button :href="route('submissions.students.create', $affiliation)" color="accent" class="shrink-0 whitespace-nowrap">
                                                 <x-heroicon-o-arrow-up-tray /> Registrar documento
                                             </x-button>
                                         @endcan
@@ -182,6 +182,7 @@
                                                     <x-heroicon-o-chevron-right class="size-4 shrink-0 text-neutral-400 group-hover:text-accent" />
                                                 </div>
                                                 <p class="mt-3 text-sm font-medium text-neutral-800">{{ number_format($categorySummary['recognized_hours'], 2, ',', '.') }} h <span class="font-normal text-neutral-500">de {{ number_format((float) $categorySummary['category']->max_hours, 2, ',', '.') }} h na categoria</span></p>
+                                                <x-progress class="mt-2" :value="$categorySummary['recognized_hours']" :max="max((float) $categorySummary['category']->max_hours, $categorySummary['recognized_hours'])" :show-value="false" />
                                             </a>
                                         @empty
                                             <p class="text-sm text-neutral-500">Nenhuma categoria cadastrada para este curso.</p>

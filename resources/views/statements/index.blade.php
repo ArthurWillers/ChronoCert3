@@ -4,7 +4,7 @@
 @endphp
 
 <x-layouts.app>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <x-page-header
             :title="$mode === 'student' ? 'Seu progresso em ACC' : 'Acompanhamento de ACC'"
             :description="$mode === 'student'

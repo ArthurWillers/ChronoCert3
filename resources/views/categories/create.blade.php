@@ -2,7 +2,7 @@
     <x-page-header title="Nova categoria de ACC" :description="$course->name">
         <x-back-button :fallback="route('categories.index')" />
     </x-page-header>
-    <x-card class="mt-6 max-w-2xl">
+    <x-card class="mx-auto mt-6 w-full max-w-4xl">
         <form method="POST" action="{{ route('categories.store') }}" class="space-y-6">
             @csrf
             <x-category-form />

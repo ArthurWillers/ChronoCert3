@@ -9,7 +9,7 @@
 @endphp
 
 <x-layouts.app>
-    <div class="mx-auto space-y-6 {{ $isCoordinator ? 'max-w-7xl' : 'max-w-4xl' }}">
+    <div class="w-full space-y-6">
         <x-page-header
             title="Documento de ACC"
             :description="'Enviado em '.$submission->submitted_at->format('d/m/Y H:i').' · origem '.$submission->origin->label()"
@@ -120,7 +120,7 @@
                         <div class="space-y-5">
                             <x-form-input name="original_title" label="Título identificado no documento" :value="$review->original_title" required maxlength="255" />
                             <x-form-input name="normalized_title" label="Título acadêmico corrigido" :value="$review->normalized_title" required maxlength="255" />
-                            <x-form-input name="certificate_hours" label="Carga horária do certificado" :value="$review->certificate_hours" required inputmode="decimal" x-model="certificateHours" help="Informe horas decimais, por exemplo 12,5 para 12 horas e 30 minutos." />
+                            <x-form-input name="certificate_hours" label="Carga horária do certificado" :value="$review->certificate_hours" type="text" inputmode="decimal" pattern="[0-9]+([.][0-9]{0,2})?" required @keydown="$event.key === 'e' || $event.key === 'E' || $event.key === '+' || $event.key === '-' ? $event.preventDefault() : null" @input="normalizeCertificateHours($event)" help="Digite apenas números; vírgulas são convertidas em ponto automaticamente." />
                         </div>
 
                         <x-form-checkbox

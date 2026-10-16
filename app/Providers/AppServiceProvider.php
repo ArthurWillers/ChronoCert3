@@ -37,7 +37,6 @@ class AppServiceProvider extends ServiceProvider
                 $user = auth()->user();
                 $affiliation = $user === null ? null : app(ActiveAffiliationContext::class)->for($user);
                 $view->with('currentAffiliation', $affiliation?->loadMissing('course'));
-                $view->with('canSwitchAffiliation', $user !== null && $user->affiliations()->valid()->count() > 1);
 
                 return;
             }

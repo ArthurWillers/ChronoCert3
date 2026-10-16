@@ -19,15 +19,15 @@
     };
 @endphp
 
-<form
-    {{ $attributes->merge(['action' => $action, 'method' => 'GET', 'class' => "t-acc flex w-full flex-col items-stretch gap-2 rounded-lg border border-neutral-200 bg-white p-1.5 shadow-sm transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent/30 sm:flex-row sm:flex-wrap sm:gap-1.5 {$alignClass} mb-6"]) }}
+    <form
+    {{ $attributes->merge(['action' => $action, 'method' => 'GET', 'class' => "t-acc mb-6 flex w-full flex-col items-stretch gap-3 rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10 sm:flex-row sm:flex-wrap sm:gap-3 sm:p-4 {$alignClass}"]) }}
     x-data="{ loading: false, expanded: @js(!$showMobileToggle) }"
     data-open="{{ $showMobileToggle ? 'false' : 'true' }}"
     x-bind:data-open="expanded"
     @submit="loading = true"
 >
     <!-- Top Bar (Mobile + Desktop) -->
-    <div class="flex w-full min-w-0 items-center {{ $showSearch ? 'sm:basis-full lg:w-80 lg:flex-none' : 'sm:hidden' }}">
+    <div class="flex w-full min-w-0 items-center {{ $showSearch ? 'sm:min-w-56 sm:flex-1' : 'sm:hidden' }}">
         @if($showSearch)
             <div class="relative flex min-w-0 flex-1 items-center">
                 <div class="absolute left-3 flex items-center pointer-events-none">
@@ -61,9 +61,9 @@
     </div>
 
     <!-- Collapsible Area (Mobile) / Inline Area (Desktop) -->
-    <div class="t-acc-panel t-acc-panel--desktop-open">
+    <div class="t-acc-panel t-acc-panel--desktop-open sm:flex-1">
         <div
-            class="t-acc-panel-inner mt-2 flex w-full flex-col items-stretch border-t border-neutral-100 pt-2 sm:mt-0 sm:!flex sm:min-w-0 sm:!flex-row sm:flex-wrap sm:basis-full sm:grow-0 sm:border-t-0 sm:pt-0 lg:basis-0 lg:grow-[2] {{ $alignClass }}"
+            class="t-acc-panel-inner mt-2 flex w-full flex-col items-stretch gap-2 border-t border-neutral-100 pt-3 sm:mt-0 sm:!flex sm:min-w-0 sm:!flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:border-t-0 sm:pt-0 {{ $alignClass }}"
             x-bind:class="{ '!mt-0 !border-t-0 !pt-0': !expanded }"
         >
             @if($slot->isNotEmpty())

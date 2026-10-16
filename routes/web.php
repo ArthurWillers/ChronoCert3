@@ -72,7 +72,7 @@ Route::middleware('auth')->group(function (): void {
 
         Route::patch('/categories/{category}/deactivate', [AccCategoryController::class, 'deactivate'])->name('categories.deactivate');
         Route::patch('/categories/{category}/reactivate', [AccCategoryController::class, 'reactivate'])->name('categories.reactivate');
-        Route::resource('categories', AccCategoryController::class);
+        Route::resource('categories', AccCategoryController::class)->except('show');
 
         Route::get('/users/lookup', [UserController::class, 'lookup'])->middleware('throttle:30,1')->name('users.lookup');
         Route::get('/users/import', [StudentAffiliationImportController::class, 'create'])

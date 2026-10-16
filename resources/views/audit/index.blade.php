@@ -10,7 +10,7 @@
             :filters="['area', 'event', 'causer', 'date_start', 'date_end', 'sort']"
             :show-search="false"
         >
-            <div class="flex w-full flex-col divide-y divide-neutral-200 sm:w-auto sm:flex-row sm:divide-x sm:divide-y-0">
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                 <x-filter-bar.select name="area" aria-label="Área auditada">
                     <option value="">Todas as áreas</option>
                     @foreach ($areas as $area)

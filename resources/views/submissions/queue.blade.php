@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <x-page-header title="Fila de análises" description="Consulte os documentos do curso ativo e retome as análises em andamento." icon="heroicon-o-clipboard-document-check" />
 
         <x-filter-bar :action="route('submissions.queue')" :filters="['search', 'status', 'sort']" search-placeholder="Buscar por discente ou matrícula">

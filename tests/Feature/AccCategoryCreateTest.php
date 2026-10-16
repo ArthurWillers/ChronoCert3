@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\AccCategory;
 use App\Models\Affiliation;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Route;
 
 uses(LazilyRefreshDatabase::class);
 
@@ -21,19 +21,6 @@ test('a coordinator can open the category creation form with only academic rules
         ->assertDontSeeText('Orientação ao discente');
 });
 
-test('a coordinator can view category academic rules without student guidance', function () {
-    $coordinatorAffiliation = Affiliation::factory()->coordinator()->create();
-    $category = AccCategory::factory()->create([
-        'course_id' => $coordinatorAffiliation->course_id,
-        'created_by_affiliation_id' => $coordinatorAffiliation->getKey(),
-    ]);
-    $coordinatorAffiliation->load('user');
-
-    $this->actingAs($coordinatorAffiliation->user)
-        ->withSession(['active_affiliation_id' => $coordinatorAffiliation->getKey()])
-        ->get(route('categories.show', $category))
-        ->assertOk()
-        ->assertSeeText('Regras acadêmicas')
-        ->assertSeeText('Limite de horas da categoria')
-        ->assertDontSeeText('Orientação ao discente');
+test('categories do not expose an intermediate detail page', function () {
+    expect(Route::has('categories.show'))->toBeFalse();
 });

@@ -1,5 +1,5 @@
 <x-layouts.app>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <x-page-header
             title="Visão institucional"
             description="Veja a estrutura acadêmica e acesse as configurações institucionais."

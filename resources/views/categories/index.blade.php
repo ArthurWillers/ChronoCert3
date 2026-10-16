@@ -35,10 +35,10 @@
                 @forelse ($categories as $category)
                     @php($isActive = $category->deactivated_at === null)
 
-                    <article class="group grid gap-x-8 gap-y-5 px-5 py-5 transition-colors duration-150 sm:px-6 lg:items-center {{ $canManageCategories ? 'lg:grid-cols-[minmax(14rem,1.1fr)_minmax(18rem,2fr)_10rem_auto]' : 'lg:grid-cols-[minmax(14rem,1.1fr)_minmax(18rem,2fr)_10rem]' }} {{ $isActive ? 'hover:bg-accent/[0.025]' : 'bg-neutral-50/70 hover:bg-neutral-100/70' }}">
+                    <article class="group grid gap-4 px-5 py-3 transition-colors duration-150 sm:px-6 lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,2fr)_9rem_auto] lg:items-center {{ $isActive ? 'hover:bg-accent/[0.025]' : 'bg-neutral-50/70 hover:bg-neutral-100/70' }}">
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="text-lg font-semibold tracking-tight text-neutral-900">{{ $category->name }}</h3>
+                                <h3 class="text-base font-semibold tracking-tight text-neutral-900">{{ $category->name }}</h3>
                                 <x-badge :color="$isActive ? 'green' : 'red'" size="sm" rounded>
                                     {{ $isActive ? 'Ativa' : 'Inativa' }}
                                 </x-badge>
@@ -50,16 +50,16 @@
                             @endif
                         </div>
 
-                        <div class="border-l-2 border-accent/35 pl-4">
-                            <p class="text-sm leading-6 text-neutral-600">
+                        <div class="min-w-0">
+                            <p class="line-clamp-2 text-sm leading-5 text-neutral-600">
                                 {{ $category->description ?: 'Sem descrição detalhada.' }}
                             </p>
                         </div>
 
                         <dl class="lg:text-right">
-                            <dt class="text-sm font-medium text-neutral-500">Limite de aproveitamento</dt>
-                            <dd class="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
-                                {{ number_format((float) $category->max_hours, 2, ',', '.') }} <span class="text-sm font-medium text-neutral-500">horas</span>
+                            <dt class="text-xs font-medium text-neutral-500">Limite</dt>
+                            <dd class="mt-0.5 text-lg font-semibold tracking-tight text-neutral-900">
+                                {{ number_format((float) $category->max_hours, 2, ',', '.') }} <span class="text-xs font-medium text-neutral-500">h</span>
                             </dd>
                         </dl>
 
@@ -85,6 +85,18 @@
                                         message="A categoria voltará a ficar disponível para novas análises."
                                     />
                                 @endcan
+                                @if ($category->reviews_count === 0)
+                                    @can('delete', $category)
+                                        <x-modal.delete
+                                            :action="route('categories.destroy', $category)"
+                                            title="Excluir categoria"
+                                            item-name="esta categoria"
+                                            permanent
+                                            button-text="Excluir"
+                                            description="A exclusão é definitiva. O registro de auditoria será preservado."
+                                        />
+                                    @endcan
+                                @endif
                             </div>
                         @endif
                     </article>

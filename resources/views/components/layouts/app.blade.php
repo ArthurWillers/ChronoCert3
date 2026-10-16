@@ -15,9 +15,6 @@
                     <p class="mt-0.5 text-xs text-neutral-500">Matrícula {{ $currentAffiliation->registration_number }}</p>
                 @endif
             </div>
-            @if ($canSwitchAffiliation)
-                <x-button :href="route('affiliations.select')" color="ghost"><x-heroicon-o-arrows-right-left /> Trocar vínculo</x-button>
-            @endif
         </div>
     @endif
 
