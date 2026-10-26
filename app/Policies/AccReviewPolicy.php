@@ -58,6 +58,14 @@ class AccReviewPolicy
         ) && $accReview->submission->status === SubmissionStatus::UnderReview;
     }
 
+    public function reopen(User $user, AccReview $accReview): bool
+    {
+        return $this->isCoordinatorForSubmission(
+            $this->activeAffiliationContext->for($user),
+            $accReview->submission,
+        ) && in_array($accReview->submission->status, [SubmissionStatus::Approved, SubmissionStatus::Rejected], true);
+    }
+
     public function approve(User $user, AccReview $accReview): bool
     {
         return $this->update($user, $accReview);

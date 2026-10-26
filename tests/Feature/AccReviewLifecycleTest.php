@@ -108,7 +108,7 @@ test('a coordinator accepts a document and saves its classification in one submi
         ->completed_at->not->toBeNull();
 });
 
-test('a rejection requires a reason and schedules purge for thirty days', function () {
+test('a rejection requires a reason and preserves the document', function () {
     [$submission, $student, $coordinator] = reviewScenario();
     $review = startReview($this, $submission, $coordinator);
 
@@ -122,7 +122,7 @@ test('a rejection requires a reason and schedules purge for thirty days', functi
 
     expect($submission->refresh())
         ->status->toBe(SubmissionStatus::Rejected)
-        ->purge_at->toEqual($submission->rejected_at->copy()->addDays(30));
+        ->purge_at->toBeNull();
     expect($review->refresh()->rejection_reason)->toBe('Documento sem identificação da atividade.');
 });
 
@@ -136,6 +136,61 @@ test('a completed review cannot receive another decision', function () {
         ->assertForbidden();
 
     expect($submission->refresh()->status)->toBe(SubmissionStatus::Approved);
+});
+
+test('a coordinator can reopen an approval, correct it and reject it', function () {
+    [$submission, $student, $coordinator, $category] = reviewScenario();
+    $review = startAndClassify($this, $submission, $coordinator, $category, 10);
+    reviewActingAs($this, $coordinator)->post(route('reviews.approve', $review))->assertSessionHasNoErrors();
+    expect(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(10.0);
+
+    reviewActingAs($this, $student)->post(route('reviews.reopen', $review))->assertForbidden();
+    $otherCoordinator = Affiliation::factory()->coordinator()->for(Course::factory()->create())->create();
+    reviewActingAs($this, $otherCoordinator)->post(route('reviews.reopen', $review))->assertForbidden();
+    reviewActingAs($this, $coordinator)->get(route('submissions.show', $submission))->assertSeeText('Reabrir análise');
+    reviewActingAs($this, $coordinator)->post(route('reviews.reopen', $review))->assertSessionHasNoErrors();
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::UnderReview)
+        ->and(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(0.0);
+    reviewActingAs($this, $coordinator)->post(route('reviews.complete', $review), [
+        ...validClassification($category, 7), 'decision' => 'approve',
+    ])->assertSessionHasNoErrors();
+    expect(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(7.0);
+    reviewActingAs($this, $coordinator)->post(route('reviews.reopen', $review))->assertSessionHasNoErrors();
+    reviewActingAs($this, $coordinator)->post(route('reviews.reject', $review), [
+        'rejection_reason' => 'Documento não corresponde à atividade.',
+    ])->assertSessionHasNoErrors();
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::Rejected)
+        ->and(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(0.0);
+    $this->assertDatabaseHas('activity_log', ['event' => 'submission.review_reopened', 'subject_id' => $submission->getKey()]);
+});
+
+test('a rejected document cannot be reopened while an identical active submission exists', function () {
+    [$submission, $student, $coordinator] = reviewScenario();
+    $submission->update(['document_sha256' => str_repeat('a', 64)]);
+    $review = startReview($this, $submission, $coordinator);
+    reviewActingAs($this, $coordinator)->post(route('reviews.reject', $review), [
+        'rejection_reason' => 'Documento ilegível para análise.',
+    ])->assertSessionHasNoErrors();
+    submissionFor($student)->update(['document_sha256' => str_repeat('a', 64)]);
+
+    reviewActingAs($this, $coordinator)->post(route('reviews.reopen', $review))->assertSessionHasErrors('review');
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::Rejected);
+});
+
+test('a coordinator can reopen and accept a rejected document', function () {
+    [$submission, $student, $coordinator, $category] = reviewScenario();
+    $review = startReview($this, $submission, $coordinator);
+    reviewActingAs($this, $coordinator)->post(route('reviews.reject', $review), [
+        'rejection_reason' => 'Documento ilegível para análise.',
+    ])->assertSessionHasNoErrors();
+    reviewActingAs($this, $coordinator)->post(route('reviews.reopen', $review))->assertSessionHasNoErrors();
+    expect($submission->refresh()->purge_at)->toBeNull()
+        ->and($review->refresh()->rejection_reason)->toBeNull();
+    reviewActingAs($this, $coordinator)->post(route('reviews.complete', $review), [
+        ...validClassification($category, 8), 'decision' => 'approve',
+    ])->assertSessionHasNoErrors();
+    expect($submission->refresh()->status)->toBe(SubmissionStatus::Approved)
+        ->and(app(BuildStudentAccSummary::class)->execute($student)['recognizedHours'])->toBe(8.0);
 });
 
 test('an inactive category cannot be approved', function () {

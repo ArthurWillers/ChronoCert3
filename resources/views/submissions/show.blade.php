@@ -161,7 +161,7 @@
                     <div x-data x-init="@if ($errors->has('rejection_reason')) $nextTick(() => $dispatch('modal-open', 'reject-review-{{ $review->id }}')) @endif">
                         <x-modal name="reject-review-{{ $review->id }}" title="Rejeitar documento" confirm-variant="warning" hide-footer>
                             <x-slot:content>
-                                <p>Explique o que impede a aceitação. O discente poderá enviar outro documento e terá 30 dias para consultar este arquivo.</p>
+                                <p>Explique o que impede a aceitação. O discente poderá enviar outro documento.</p>
                                 <form method="POST" action="{{ route('reviews.reject', $review) }}" class="mt-5 space-y-4" x-data="{ loading: false }" @submit="loading = true">
                                     @csrf
                                     <x-form-textarea name="rejection_reason" label="Motivo da rejeição" required minlength="5" maxlength="2000" />
@@ -209,9 +209,15 @@
                         </x-callout>
                     @endif
 
-                    @if ($submission->status === \App\Enums\SubmissionStatus::Rejected && $submission->purge_at !== null)
-                        <p class="mt-5 text-sm text-neutral-600">Este documento ficará disponível até {{ $submission->purge_at->format('d/m/Y H:i') }}.</p>
-                    @endif
+                    @can('reopen', $review)
+                        <div class="mt-6 border-t border-neutral-200 pt-5">
+                            <p class="mb-4 text-sm text-neutral-600">Reabra a análise para corrigir os dados ou alterar a decisão. As horas deixam de ser contabilizadas até uma nova aceitação.</p>
+                            <form method="POST" action="{{ route('reviews.reopen', $review) }}">
+                                @csrf
+                                <x-button type="submit" color="outline"><x-heroicon-o-arrow-path /> Reabrir análise</x-button>
+                            </form>
+                        </div>
+                    @endcan
                 @endif
             </x-card>
         @endif

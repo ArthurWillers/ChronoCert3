@@ -41,7 +41,6 @@ class RejectAccReview
             }
 
             $completedAt = now();
-            $purgeAt = $completedAt->copy()->addDays(30);
             $review->update([
                 'reviewer_affiliation_id' => $reviewerAffiliation->getKey(),
                 'rejection_reason' => trim($rejectionReason),
@@ -51,7 +50,7 @@ class RejectAccReview
                 'status' => SubmissionStatus::Rejected,
                 'reviewed_at' => $completedAt,
                 'rejected_at' => $completedAt,
-                'purge_at' => $purgeAt,
+                'purge_at' => null,
             ]);
 
             $this->recordActivity->execute(
@@ -69,7 +68,6 @@ class RejectAccReview
                 changes: [
                     'status' => ['old' => SubmissionStatus::UnderReview->value, 'new' => SubmissionStatus::Rejected->value],
                     'rejected_at' => ['old' => null, 'new' => $completedAt->toIso8601String()],
-                    'purge_at' => ['old' => null, 'new' => $purgeAt->toIso8601String()],
                 ],
                 reason: $review->rejection_reason,
             );

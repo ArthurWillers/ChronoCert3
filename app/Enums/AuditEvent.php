@@ -35,6 +35,7 @@ enum AuditEvent: string
     case SubmissionViewed = 'submission.viewed';
     case SubmissionDownloaded = 'submission.downloaded';
     case SubmissionReviewStarted = 'submission.review_started';
+    case SubmissionReviewReopened = 'submission.review_reopened';
     case SubmissionReclassified = 'submission.reclassified';
     case SubmissionApproved = 'submission.approved';
     case SubmissionRejected = 'submission.rejected';
@@ -81,6 +82,7 @@ enum AuditEvent: string
             self::SubmissionViewed,
             self::SubmissionDownloaded,
             self::SubmissionReviewStarted,
+            self::SubmissionReviewReopened,
             self::SubmissionReclassified,
             self::SubmissionApproved,
             self::SubmissionRejected,
@@ -140,6 +142,7 @@ enum AuditEvent: string
             self::SubmissionViewed => 'Documento consultado',
             self::SubmissionDownloaded => 'Documento baixado',
             self::SubmissionReviewStarted => 'Análise iniciada',
+            self::SubmissionReviewReopened => 'Análise reaberta',
             self::SubmissionReclassified => 'Documento reclassificado',
             self::SubmissionApproved => 'Documento aprovado',
             self::SubmissionRejected => 'Documento rejeitado',

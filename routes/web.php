@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function (): void {
             ->name('submissions.review.store');
         Route::patch('/reviews/{review}', [AccReviewController::class, 'update'])
             ->name('reviews.update');
+        Route::post('/reviews/{review}/reopen', [AccReviewController::class, 'reopen'])
+            ->name('reviews.reopen');
         Route::post('/reviews/{review}/complete', [AccReviewController::class, 'complete'])
             ->name('reviews.complete');
         Route::post('/reviews/{review}/approve', [AccReviewController::class, 'approve'])

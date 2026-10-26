@@ -6,6 +6,7 @@ use App\Actions\Affiliations\ActiveAffiliationContext;
 use App\Actions\Reviews\ApproveAccReview;
 use App\Actions\Reviews\ClassifyAccReview;
 use App\Actions\Reviews\RejectAccReview;
+use App\Actions\Reviews\ReopenAccReview;
 use App\Actions\Reviews\StartAccReview;
 use App\Http\Requests\ApproveAccReviewRequest;
 use App\Http\Requests\ClassifyAccReviewRequest;
@@ -28,6 +29,7 @@ class AccReviewController extends Controller
         private ClassifyAccReview $classifyAccReview,
         private ApproveAccReview $approveAccReview,
         private RejectAccReview $rejectAccReview,
+        private ReopenAccReview $reopenAccReview,
     ) {}
 
     public function store(StartAccReviewRequest $request, AccSubmission $submission): RedirectResponse
@@ -44,6 +46,14 @@ class AccReviewController extends Controller
 
         return redirect()->route('submissions.show', $review->acc_submission_id)
             ->with('success', 'Classificação da análise salva.');
+    }
+
+    public function reopen(Request $request, AccReview $review): RedirectResponse
+    {
+        $this->reopenAccReview->execute($review, $this->activeAffiliation($request), $request->user());
+
+        return redirect()->route('submissions.show', $review->acc_submission_id)
+            ->with('success', 'Análise reaberta. Revise os dados e registre uma nova decisão.');
     }
 
     /**
@@ -63,7 +73,7 @@ class AccReviewController extends Controller
             );
 
             return redirect()->route('submissions.show', $review->acc_submission_id)
-                ->with('success', 'Documento rejeitado. O descarte foi agendado para 30 dias.');
+                ->with('success', 'Documento rejeitado.');
         }
 
         DB::transaction(function () use ($review, $data, $activeAffiliation, $request): void {
@@ -105,7 +115,7 @@ class AccReviewController extends Controller
         );
 
         return redirect()->route('submissions.show', $review->acc_submission_id)
-            ->with('success', 'Documento rejeitado. O descarte foi agendado para 30 dias.');
+            ->with('success', 'Documento rejeitado.');
     }
 
     private function activeAffiliation(Request $request): Affiliation
